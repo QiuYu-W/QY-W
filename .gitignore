@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.tmp/
+.worktrees/
+.superpowers/sdd/
+playwright-report/
+test-results/
+coverage/
+
