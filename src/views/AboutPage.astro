@@ -1,0 +1,181 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getProfile } from "../lib/content";
+import { alternateLocale, type Locale } from "../lib/i18n";
+import { routeFor } from "../lib/urls";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const profile = await getProfile();
+const copy = locale === "zh"
+  ? {
+      name: profile.nameZh,
+      role: profile.roleZh,
+      bio: profile.bioZh,
+      statement: profile.statementZh,
+      interests: profile.interestsZh,
+      about: "关于我",
+      interestsHeading: "研究兴趣",
+      education: "教育经历",
+      experience: "科研与工作经历",
+      honors: "荣誉与奖励",
+      skills: "技能",
+      service: "学术服务",
+      contact: "联系方式",
+      profiles: "学术主页与外部链接",
+      noEntries: "待填写。"
+    }
+  : {
+      name: profile.nameEn,
+      role: profile.roleEn,
+      bio: profile.bioEn,
+      statement: profile.statementEn,
+      interests: profile.interestsEn,
+      about: "About",
+      interestsHeading: "Research interests",
+      education: "Education",
+      experience: "Research and professional experience",
+      honors: "Honors and awards",
+      skills: "Skills",
+      service: "Academic service",
+      contact: "Contact",
+      profiles: "Academic and external profiles",
+      noEntries: "To be provided."
+    };
+const canonicalPath = routeFor(locale, "about");
+const localizedItems = (items: typeof profile.education) => items.map((item) => ({
+  title: locale === "zh" ? item.titleZh : item.titleEn,
+  detail: locale === "zh" ? item.detailZh : item.detailEn,
+  start: item.start,
+  end: item.end
+}));
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${copy.about} | ${copy.name}`}
+  description={copy.bio}
+  canonicalPath={canonicalPath}
+  alternatePath={routeFor(alternateLocale(locale), "about")}
+>
+  <article class="about-page">
+    <header>
+      <p class="role">{copy.role}</p>
+      <h1>{copy.about}</h1>
+      <p class="statement">{copy.statement}</p>
+      <p>{copy.bio}</p>
+    </header>
+
+    <section aria-labelledby="about-interests">
+      <h2 id="about-interests">{copy.interestsHeading}</h2>
+      {copy.interests.length > 0 ? <ul>{copy.interests.map((interest) => <li>{interest}</li>)}</ul> : <p>{copy.noEntries}</p>}
+    </section>
+
+    {[
+      { id: "education", heading: copy.education, items: localizedItems(profile.education) },
+      { id: "experience", heading: copy.experience, items: localizedItems(profile.experience) },
+      { id: "honors", heading: copy.honors, items: localizedItems(profile.honors) },
+      { id: "service", heading: copy.service, items: localizedItems(profile.service) }
+    ].map(({ id, heading, items }) => (
+      <section aria-labelledby={id}>
+        <h2 id={id}>{heading}</h2>
+        {items.length > 0 ? (
+          <ol class="cv-list">
+            {items.map((item) => (
+              <li>
+                <h3>{item.title}</h3>
+                {(item.start || item.end) && <p class="dates">{item.start}{item.start && item.end ? " — " : ""}{item.end}</p>}
+                <p>{item.detail}</p>
+              </li>
+            ))}
+          </ol>
+        ) : <p>{copy.noEntries}</p>}
+      </section>
+    ))}
+
+    <section aria-labelledby="skills">
+      <h2 id="skills">{copy.skills}</h2>
+      {(locale === "zh" ? profile.skillsZh : profile.skillsEn).length > 0 ? (
+        <ul>{(locale === "zh" ? profile.skillsZh : profile.skillsEn).map((skill) => <li>{skill}</li>)}</ul>
+      ) : <p>{copy.noEntries}</p>}
+    </section>
+
+    <section aria-labelledby="contact">
+      <h2 id="contact">{copy.contact}</h2>
+      <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+    </section>
+
+    <section aria-labelledby="profiles">
+      <h2 id="profiles">{copy.profiles}</h2>
+      {profile.links.length > 0 ? (
+        <ul>
+          {profile.links.map((link) => <li><a href={link.url}>{link.label}</a></li>)}
+        </ul>
+      ) : <p>{copy.noEntries}</p>}
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .about-page {
+    max-width: 52rem;
+    padding-top: clamp(3rem, 8vw, 6rem);
+  }
+
+  .role,
+  .dates {
+    color: var(--color-muted);
+  }
+
+  .role {
+    margin: 0 0 0.5rem;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    margin: 0;
+  }
+
+  .statement {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-block: 1.5rem;
+  }
+
+  section {
+    margin-top: 2.75rem;
+  }
+
+  h2 {
+    font-size: 1.35rem;
+    margin: 0 0 1rem;
+  }
+
+  .cv-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cv-list li + li {
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+  }
+
+  h3,
+  .cv-list p {
+    margin: 0;
+  }
+
+  .cv-list h3 + p {
+    margin-top: 0.35rem;
+  }
+
+  .dates + p {
+    margin-top: 0.35rem;
+  }
+</style>

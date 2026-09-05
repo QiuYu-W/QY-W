@@ -1,0 +1,195 @@
+---
+import CountLinks from "../components/CountLinks.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getHomepageCounts, getProfile, getPublishedPosts } from "../lib/content";
+import { alternateLocale, type Locale } from "../lib/i18n";
+import { assetUrl, routeFor } from "../lib/urls";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const [profile, counts, posts] = await Promise.all([
+  getProfile(),
+  getHomepageCounts(),
+  getPublishedPosts(locale)
+]);
+const copy = locale === "zh"
+  ? {
+      name: profile.nameZh,
+      role: profile.roleZh,
+      statement: profile.statementZh,
+      bio: profile.bioZh,
+      interests: profile.interestsZh,
+      portraitAlt: profile.portraitAltZh,
+      interestsHeading: "研究兴趣",
+      latestHeading: "最新博客文章",
+      noPosts: "暂时没有已发布的博客文章。"
+    }
+  : {
+      name: profile.nameEn,
+      role: profile.roleEn,
+      statement: profile.statementEn,
+      bio: profile.bioEn,
+      interests: profile.interestsEn,
+      portraitAlt: profile.portraitAltEn,
+      interestsHeading: "Research interests",
+      latestHeading: "Latest blog posts",
+      noPosts: "No blog posts have been published yet."
+    };
+const dateFormatter = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en", {
+  year: "numeric",
+  month: "long",
+  day: "numeric"
+});
+const canonicalPath = routeFor(locale, "home");
+---
+
+<BaseLayout
+  locale={locale}
+  title={`${copy.name} | ${copy.role}`}
+  description={copy.bio}
+  canonicalPath={canonicalPath}
+  alternatePath={routeFor(alternateLocale(locale), "home")}
+  image={profile.portrait}
+>
+  <section class="intro" aria-labelledby="profile-name">
+    <div class="intro-copy">
+      <p class="role">{copy.role}</p>
+      <h1 id="profile-name">{copy.name}</h1>
+      <p class="statement">{copy.statement}</p>
+      <p>{copy.bio}</p>
+      <section aria-labelledby="interests-heading">
+        <h2 id="interests-heading">{copy.interestsHeading}</h2>
+        <ul class="interests">
+          {copy.interests.map((interest) => <li>{interest}</li>)}
+        </ul>
+      </section>
+    </div>
+    <figure>
+      <img src={assetUrl(profile.portrait)} alt={copy.portraitAlt} width="480" height="480" />
+    </figure>
+  </section>
+
+  <CountLinks {...counts} locale={locale} />
+
+  <section class="latest-posts" aria-labelledby="latest-posts-heading">
+    <h2 id="latest-posts-heading">{copy.latestHeading}</h2>
+    {posts.length > 0 ? (
+      <ol>
+        {posts.slice(0, 2).map((post) => (
+          <li>
+            <article>
+              <h3><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h3>
+              <p>{post.data.summary}</p>
+              <time datetime={post.data.publishedAt.toISOString()}>{dateFormatter.format(post.data.publishedAt)}</time>
+            </article>
+          </li>
+        ))}
+      </ol>
+    ) : <p class="empty-state">{copy.noPosts}</p>}
+  </section>
+</BaseLayout>
+
+<style>
+  .intro {
+    align-items: center;
+    display: grid;
+    gap: clamp(2rem, 7vw, 5rem);
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 22rem);
+    padding-top: clamp(3rem, 8vw, 6rem);
+  }
+
+  .role {
+    color: var(--color-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  h1 {
+    font-size: clamp(2.25rem, 5vw, 4rem);
+    margin: 0;
+  }
+
+  .statement {
+    font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+    font-weight: 600;
+    margin-block: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1rem;
+    margin: 2rem 0 0.75rem;
+  }
+
+  .interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .interests li {
+    color: var(--color-muted);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  img {
+    background: color-mix(in srgb, var(--color-ink) 6%, var(--color-paper));
+    display: block;
+    height: auto;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .latest-posts {
+    margin-top: 3rem;
+  }
+
+  .latest-posts > h2 {
+    font-size: 1.5rem;
+    margin: 0 0 1.25rem;
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li + li {
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  article p {
+    margin-block: 0.5rem;
+  }
+
+  time,
+  .empty-state {
+    color: var(--color-muted);
+  }
+
+  @media (max-width: 48rem) {
+    .intro {
+      grid-template-columns: 1fr;
+    }
+
+    figure {
+      max-width: 20rem;
+      order: -1;
+    }
+  }
+</style>
