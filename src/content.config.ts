@@ -2,6 +2,11 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { blogSchema, profileSchema, projectSchema, publicationSchema } from "./lib/schemas";
 
+/** Keep collection identities tied to their source files; public URLs use schema slugs. */
+export function sourceFileEntryId({ entry }: { entry: string }): string {
+  return entry;
+}
+
 const profile = defineCollection({
   loader: glob({ pattern: "profile.{yaml,yml}", base: "./src/data/profile" }),
   schema: profileSchema
@@ -11,7 +16,11 @@ const publications = defineCollection({
   schema: publicationSchema
 });
 const projects = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/data/projects" }),
+  loader: glob({
+    pattern: "**/*.md",
+    base: "./src/data/projects",
+    generateId: sourceFileEntryId
+  }),
   schema: projectSchema
 });
 const blog = defineCollection({
@@ -19,11 +28,7 @@ const blog = defineCollection({
     pattern: "**/*.md",
     base: "./src/data/blog",
     retainBody: true,
-    generateId: ({ data, entry }) => {
-      const language = typeof data.language === "string" ? data.language : "unknown";
-      const slug = typeof data.slug === "string" ? data.slug : entry;
-      return `${language}-${slug}`;
-    }
+    generateId: sourceFileEntryId
   }),
   schema: blogSchema
 });
