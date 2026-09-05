@@ -1,0 +1,32 @@
+---
+import type { Locale } from "../lib/i18n";
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+  alternatePath?: string;
+}
+
+const { locale, currentPath, alternatePath } = Astro.props;
+const currentLabel = locale === "zh" ? "中文" : "English";
+const alternateLabel = locale === "zh" ? "English" : "中文";
+const label = locale === "zh" ? "语言切换" : "Language switch";
+---
+
+<div class="language-switch" aria-label={label}>
+  <a href={currentPath} aria-current="page">{currentLabel}</a>
+  {alternatePath ? <a href={alternatePath}>{alternateLabel}</a> : <span>{alternateLabel}</span>}
+</div>
+
+<style>
+  .language-switch {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .language-switch > :not(:last-child)::after {
+    content: "/";
+    color: var(--color-muted);
+    margin-left: 0.5rem;
+  }
+</style>
