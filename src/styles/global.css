@@ -1,0 +1,75 @@
+:root {
+  --color-ink: #18212b;
+  --color-paper: #fcfcfa;
+  --color-muted: #5f6b76;
+  --color-accent: #0d6f75;
+  --color-focus: #d45a14;
+  --content-width: 72rem;
+  --page-gutter: clamp(1.25rem, 4vw, 3rem);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-synthesis: none;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 20rem;
+}
+
+main,
+.content-width {
+  width: min(100% - (var(--page-gutter) * 2), var(--content-width));
+  margin-inline: auto;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+p,
+li {
+  max-width: 70ch;
+}
+
+a {
+  color: var(--color-accent);
+  text-underline-offset: 0.16em;
+}
+
+:focus-visible {
+  outline: 0.2rem solid var(--color-focus);
+  outline-offset: 0.2rem;
+}
+
+@media (max-width: 48rem) {
+  :root {
+    --page-gutter: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
