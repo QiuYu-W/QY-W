@@ -13,10 +13,10 @@ const alternateLabel = locale === "zh" ? "English" : "中文";
 const label = locale === "zh" ? "语言切换" : "Language switch";
 ---
 
-<div class="language-switch" aria-label={label}>
+<nav class="language-switch" aria-label={label}>
   <a href={currentPath} aria-current="page">{currentLabel}</a>
   {alternatePath ? <a href={alternatePath}>{alternateLabel}</a> : <span>{alternateLabel}</span>}
-</div>
+</nav>
 
 <style>
   .language-switch {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { alternateLocale, localizedPath } from "../../src/lib/i18n";
-import { routeFor } from "../../src/lib/urls";
+import { assetUrl, routeFor } from "../../src/lib/urls";
 
 describe("localizedPath", () => {
   it("keeps Chinese at the root and prefixes English", () => {
@@ -26,5 +26,22 @@ describe("routeFor", () => {
     expect(routeFor("zh", "publications")).toBe("/publications/");
     expect(routeFor("en", "projects", "robust-fs")).toBe("/en/projects/robust-fs/");
     expect(routeFor("zh", "blog", "reproducible-experiments")).toBe("/blog/reproducible-experiments/");
+  });
+
+  it("rejects empty detail slugs with a specific error", () => {
+    expect(() => routeFor("zh", "projects", "")).toThrow("slug cannot be empty");
+  });
+
+  it("rejects malformed detail slugs", () => {
+    expect(() => routeFor("en", "blog", "not/a-slug")).toThrow("invalid slug for route");
+  });
+
+});
+
+describe("assetUrl", () => {
+  it("prefixes root-relative media paths while preserving non-root paths", () => {
+    expect(assetUrl("/images/portrait.jpg")).toBe("/images/portrait.jpg");
+    expect(assetUrl("https://cdn.example.com/portrait.jpg")).toBe("https://cdn.example.com/portrait.jpg");
+    expect(assetUrl("images/portrait.jpg")).toBe("images/portrait.jpg");
   });
 });

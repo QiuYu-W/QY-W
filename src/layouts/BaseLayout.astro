@@ -23,6 +23,7 @@ const imageUrl = image ? new URL(assetUrl(image), siteUrl).href : undefined;
 const language = locale === "zh" ? "zh-CN" : "en";
 const alternateLanguage = alternateLocale(locale) === "zh" ? "zh-CN" : "en";
 const ogLocale = locale === "zh" ? "zh_CN" : "en_US";
+const skipLabel = locale === "zh" ? "跳至主要内容" : "Skip to content";
 ---
 
 <!doctype html>
@@ -48,7 +49,7 @@ const ogLocale = locale === "zh" ? "zh_CN" : "en_US";
     {imageUrl && <meta name="twitter:image" content={imageUrl} />}
   </head>
   <body>
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content">{skipLabel}</a>
     <Header locale={locale} currentPath={canonicalPath} alternatePath={alternatePath} />
     <main id="main-content" tabindex="-1">
       <slot />

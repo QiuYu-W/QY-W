@@ -19,11 +19,11 @@ function withBase(path: string): string {
 }
 
 export function routeFor(locale: Locale, kind: RouteKind, slug?: string): string {
-  if (slug !== undefined && (!DETAIL_ROUTES.has(kind) || !SAFE_SLUG.test(slug))) {
-    throw new Error("invalid slug for route");
-  }
   if (DETAIL_ROUTES.has(kind) && slug === "") {
     throw new Error("slug cannot be empty");
+  }
+  if (slug !== undefined && (!DETAIL_ROUTES.has(kind) || !SAFE_SLUG.test(slug))) {
+    throw new Error("invalid slug for route");
   }
   const logicalPath = slug ? `${ROUTES[kind]}${slug}/` : ROUTES[kind];
   return withBase(localizedPath(locale, logicalPath));
