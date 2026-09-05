@@ -20,9 +20,9 @@ const counts = [
 ] as const;
 ---
 
-<section class="count-links" aria-label={locale === "zh" ? "内容概览" : "Content overview"}>
+<section class="count-links" aria-label={locale === "zh" ? "内容概览" : "Content overview"} data-testid="content-counts">
   {counts.map(({ key, count, href }) => (
-    <a href={href}>
+    <a href={href} aria-label={`${count} ${labels[key]}`}>
       <span class="count" aria-hidden="true">{count}</span>
       <span>{labels[key]}</span>
     </a>

@@ -80,7 +80,7 @@ const canonicalPath = routeFor(locale, "home");
       <ol>
         {posts.slice(0, 2).map((post) => (
           <li>
-            <article>
+            <article data-testid="homepage-post">
               <h3><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h3>
               <p>{post.data.summary}</p>
               <time datetime={post.data.publishedAt.toISOString()}>{dateFormatter.format(post.data.publishedAt)}</time>
