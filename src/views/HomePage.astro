@@ -54,7 +54,7 @@ const canonicalPath = routeFor(locale, "home");
   alternatePath={routeFor(alternateLocale(locale), "home")}
   image={profile.portrait}
 >
-  <section class="intro" aria-labelledby="profile-name">
+  <section class="intro" aria-labelledby="profile-name" data-testid="homepage-intro">
     <div class="intro-copy">
       <p class="role">{copy.role}</p>
       <h1 id="profile-name">{copy.name}</h1>
@@ -74,7 +74,7 @@ const canonicalPath = routeFor(locale, "home");
 
   <CountLinks {...counts} locale={locale} />
 
-  <section class="latest-posts" aria-labelledby="latest-posts-heading">
+  <section class="latest-posts" aria-labelledby="latest-posts-heading" data-testid="homepage-latest-posts">
     <h2 id="latest-posts-heading">{copy.latestHeading}</h2>
     {posts.length > 0 ? (
       <ol>

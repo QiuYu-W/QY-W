@@ -61,7 +61,7 @@ const localizedItems = (items: typeof profile.education) => items.map((item) => 
   canonicalPath={canonicalPath}
   alternatePath={routeFor(alternateLocale(locale), "about")}
 >
-  <article class="about-page">
+  <article class="about-page" data-testid="about-content">
     <header>
       <p class="role">{copy.role}</p>
       <h1>{copy.about}</h1>

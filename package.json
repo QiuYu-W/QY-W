@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "astro dev",
+    "preview": "astro preview",
     "build": "astro build",
     "check": "astro check",
     "test": "vitest run",
