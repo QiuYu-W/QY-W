@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getProfile, getPublishedProjects, getPublishedPublications } from "../../lib/content";
+import { routeFor } from "../../lib/urls";
+import ProjectPage from "../../views/ProjectPage.astro";
+
+export async function getStaticPaths() {
+  const projects = await getPublishedProjects();
+  return projects.map((project) => ({ params: { id: project.data.slug }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const profile = await getProfile();
+const publications = (await getPublishedPublications()).filter((publication) => project.data.publicationKeys.includes(publication.data.citationKey));
+const title = project.data.titleZh;
+const description = project.data.summaryZh;
+---
+
+<BaseLayout locale="zh" title={`${title} | ${profile.nameZh}`} description={description} image={project.data.cover} canonicalPath={routeFor("zh", "projects", project.data.slug)} alternatePath={routeFor("en", "projects", project.data.slug)}>
+  <ProjectPage locale="zh" project={project} publications={publications} />
+</BaseLayout>

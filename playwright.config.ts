@@ -7,7 +7,7 @@ export default defineConfig({
   testDir: "tests/e2e",
   globalTimeout: 180_000,
   retries: 0,
-  globalSetup: "./tests/e2e/global-setup.ts",
+  globalSetup: "./tests/e2e/projects-fixture-setup.ts",
   use: {
     baseURL: origin,
     launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }

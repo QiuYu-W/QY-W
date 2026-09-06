@@ -1,0 +1,13 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getProfile } from "../../../lib/content";
+import { routeFor } from "../../../lib/urls";
+import ProjectsPage from "../../../views/ProjectsPage.astro";
+
+const profile = await getProfile();
+const description = "Independently described research projects, progress, and related outputs.";
+---
+
+<BaseLayout locale="en" title={`Research Projects | ${profile.nameEn}`} description={description} canonicalPath={routeFor("en", "projects")} alternatePath={routeFor("zh", "projects")}>
+  <ProjectsPage locale="en" />
+</BaseLayout>

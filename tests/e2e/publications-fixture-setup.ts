@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { build } from "astro";
 import { parse, stringify } from "yaml";
 import startPreview from "./global-setup";
+import { fixtureProjectPublication, writeProjectFixtures } from "./project-fixtures";
 
 /** Build real routes with synthetic records only inside a disposable test root. */
 export default async function setupPublicationsFixture() {
@@ -30,6 +31,8 @@ export default async function setupPublicationsFixture() {
       { citationKey: "fixture-old-journal", title: "Fixture old journal", year: 2024, type: "journal", authors: ["Other Author"] }
     ];
     for (const record of records) await writeFile(join(publicationDirectory, `${record.citationKey}.yaml`), stringify({ ...record, venue: "Fixture venue", status: "published", links: [{ label: "Fixture resource", url: "https://example.org/resource" }], draft: false }));
+    await writeFile(join(publicationDirectory, "fixture-project-publication.yaml"), stringify(fixtureProjectPublication));
+    await writeProjectFixtures(fixtureRoot);
     process.chdir(fixtureRoot);
     await build({ root: fixtureRoot });
     // Reuse the approved strict-port/readiness/stop lifecycle unchanged.

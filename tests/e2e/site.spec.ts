@@ -149,3 +149,31 @@ test("publication filters leave the static publication index readable without Ja
     await context.close();
   }
 });
+
+for (const [route, title, alternateRoute] of [
+  ["/projects/robust-feature-selection/", "鲁棒特征选择", "/en/projects/robust-feature-selection/"],
+  ["/en/projects/robust-feature-selection/", "Robust Feature Selection", "/projects/robust-feature-selection/"]
+] as const) {
+  test(`project ${route} renders its localized seed record and language alternate`, async ({ page }) => {
+    const response = await page.goto(atConfiguredBase(route));
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    await expect(page.locator(".language-switch a").last()).toHaveAttribute("href", atConfiguredBase(alternateRoute));
+    const coverAlt = route.startsWith("/en/") ? "Isolated fixture project cover" : "隔离测试项目封面";
+    await expect(page.getByRole("img", { name: coverAlt })).toHaveAttribute("src", atConfiguredBase("/fixtures/project-cover.svg"));
+  });
+}
+
+test("project drafts are not generated", async ({ page }) => {
+  for (const route of ["/projects/draft-project/", "/en/projects/draft-project/"]) {
+    const response = await page.goto(atConfiguredBase(route));
+    expect(response?.status()).toBe(404);
+  }
+});
+
+test("project Markdown keeps base-aware paths while raw HTML is not rendered", async ({ page }) => {
+  await page.goto(atConfiguredBase("/projects/robust-feature-selection/"));
+  await expect(page.getByRole("link", { name: "内部资源" })).toHaveAttribute("href", atConfiguredBase("/project-assets/"));
+  await expect(page.locator("[data-project-raw-html]")).toHaveCount(0);
+  await expect(page.getByText("Fixture project publication", { exact: true })).toBeVisible();
+});

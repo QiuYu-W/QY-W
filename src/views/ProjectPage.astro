@@ -1,0 +1,64 @@
+---
+import type { Project, Publication } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+import { renderTrustedMarkdown } from "../lib/markdown";
+import { assetUrl } from "../lib/urls";
+
+interface Props {
+  locale: Locale;
+  project: Project;
+  publications: Publication[];
+}
+
+const { locale, project, publications } = Astro.props;
+const record = project.data;
+const title = locale === "zh" ? record.titleZh : record.titleEn;
+const summary = locale === "zh" ? record.summaryZh : record.summaryEn;
+const body = locale === "zh" ? record.bodyZh : record.bodyEn;
+const role = locale === "zh" ? record.roleZh : record.roleEn;
+const coverAlt = locale === "zh" ? record.coverAltZh : record.coverAltEn;
+const status = locale === "zh"
+  ? { active: "进行中", completed: "已完成", paused: "已暂停" }[record.status]
+  : { active: "Active", completed: "Completed", paused: "Paused" }[record.status];
+const copy = locale === "zh"
+  ? { status: "状态", period: "项目周期", role: "个人角色", links: "项目链接", publications: "关联论文" }
+  : { status: "Status", period: "Project period", role: "Role", links: "Project links", publications: "Associated publications" };
+const { html } = renderTrustedMarkdown(body);
+---
+
+<article class="project-page" data-testid="project-page">
+  <header>
+    <h1>{title}</h1>
+    <p class="summary">{summary}</p>
+  </header>
+  {record.cover && <img class="cover" src={assetUrl(record.cover)} alt={coverAlt || title} />}
+  <dl class="metadata">
+    <div><dt>{copy.status}</dt><dd>{status}</dd></div>
+    <div><dt>{copy.period}</dt><dd>{record.start}{record.end && ` – ${record.end}`}</dd></div>
+    <div><dt>{copy.role}</dt><dd>{role}</dd></div>
+  </dl>
+  <div class="prose" set:html={html} />
+  {record.links.length > 0 && <section aria-labelledby="project-links">
+    <h2 id="project-links">{copy.links}</h2>
+    <ul>{record.links.map((link) => <li><a href={link.url}>{link.label}</a></li>)}</ul>
+  </section>}
+  {publications.length > 0 && <section aria-labelledby="project-publications">
+    <h2 id="project-publications">{copy.publications}</h2>
+    <ul>{publications.map((publication) => <li>{publication.data.title}</li>)}</ul>
+  </section>}
+</article>
+
+<style>
+  .project-page { max-width: 46rem; padding-top: clamp(3rem, 8vw, 6rem); }
+  header { margin-bottom: 2rem; }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  .summary { color: var(--color-muted); font-size: 1.2rem; margin: 1rem 0 0; }
+  .cover { aspect-ratio: 16 / 9; margin-bottom: 2rem; object-fit: cover; width: 100%; }
+  .metadata { display: grid; gap: 0.8rem; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: 0 0 2.5rem; }
+  .metadata div { border-top: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent); padding-top: 0.5rem; }
+  dt { color: var(--color-muted); font-size: 0.9rem; }
+  dd { margin: 0.2rem 0 0; }
+  .prose :global(h2), section h2 { font-size: 1.5rem; margin-top: 2.5rem; }
+  .prose :global(img) { height: auto; max-width: 100%; }
+  section ul { padding-left: 1.25rem; }
+</style>
