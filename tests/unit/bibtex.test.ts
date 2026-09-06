@@ -11,6 +11,18 @@ describe("publication identifiers", () => {
 });
 
 describe("BibTeX import policy", () => {
+  it.each([
+    ["year={0}", "year"],
+    ["year={10000}", "year"],
+    ["year={2026}, doi={not-a-doi}", "doi"]
+  ])("rejects schema-incompatible bibliography %s with citation key and field", (fields, field) => {
+    expect(() => parseBibtex(`@article{invalid-bibliography, title={Title}, author={A}, journal={V}, ${fields}}`))
+      .toThrow(new RegExp(`invalid-bibliography[\\s\\S]*${field}`, "i"));
+  });
+
+  it.each([1000, 9999])("accepts shared schema boundary year %s", (year) => {
+    expect(parseBibtex(`@article{boundary, title={Title}, author={A}, journal={V}, year={${year}}}`)[0].year).toBe(year);
+  });
   const imported = {
     citationKey: "new-key",
     doi: "10.1000/x",
@@ -46,6 +58,11 @@ describe("BibTeX import policy", () => {
       links: [{ label: "Code", url: "https://example.org/code" }]
     });
     expect(mergePublication(imported, merged)).toEqual(merged);
+  });
+
+  it("preserves explicitly empty optional CMS fields", () => {
+    const existing = { ...imported, titleZh: "", abstractZh: "", abstractEn: "", status: "published" as const, links: [], draft: false };
+    expect(mergePublication(imported, existing)).toEqual(existing);
   });
 
   it("matches DOI before citation key and otherwise falls back to the citation key", () => {

@@ -1,7 +1,7 @@
 import { Cite } from "@citation-js/core";
 import "@citation-js/plugin-bibtex";
 import { normalizeDoi } from "./identifiers";
-import type { PublicationRecord } from "./schemas";
+import { importedPublicationSchema, type PublicationRecord } from "./schemas";
 
 type CslRecord = Record<string, unknown>;
 
@@ -97,7 +97,13 @@ export function parseBibtex(source: string): ImportedPublication[] {
   if (records.length === 0) {
     throw new Error("BibTeX source contains no publication records");
   }
-  return records.map(importedPublication).sort((left, right) => left.citationKey.localeCompare(right.citationKey));
+  return records.map((record) => {
+    const result = importedPublicationSchema.safeParse(importedPublication(record));
+    if (!result.success) {
+      throw new Error(`BibTeX record "${citationKey(record)}": ${result.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")}`);
+    }
+    return result.data;
+  }).sort((left, right) => left.citationKey.localeCompare(right.citationKey));
 }
 
 /** Find the one CMS record updated by an import: DOI wins, then a key-only import uses the citation key. */
@@ -119,7 +125,7 @@ export function mergePublication(imported: ImportedPublication, existing?: Publi
     citationKey: imported.citationKey,
     ...(normalizeDoi(imported.doi) ? { doi: normalizeDoi(imported.doi) } : {}),
     title: imported.title,
-    ...(existing?.titleZh ? { titleZh: existing.titleZh } : {}),
+    ...(existing?.titleZh !== undefined ? { titleZh: existing.titleZh } : {}),
     authors: imported.authors,
     year: imported.year,
     venue: imported.venue,
@@ -128,8 +134,8 @@ export function mergePublication(imported: ImportedPublication, existing?: Publi
     ...(imported.volume ? { volume: imported.volume } : {}),
     ...(imported.issue ? { issue: imported.issue } : {}),
     ...(imported.pages ? { pages: imported.pages } : {}),
-    ...(existing?.abstractZh ? { abstractZh: existing.abstractZh } : {}),
-    ...(existing?.abstractEn ? { abstractEn: existing.abstractEn } : {}),
+    ...(existing?.abstractZh !== undefined ? { abstractZh: existing.abstractZh } : {}),
+    ...(existing?.abstractEn !== undefined ? { abstractEn: existing.abstractEn } : {}),
     links: existing?.links ?? [],
     draft: existing?.draft ?? false
   };

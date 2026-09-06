@@ -2,6 +2,11 @@ import { z } from "astro/zod";
 import { normalizeDoi } from "./identifiers";
 
 const link = z.object({ label: z.string().min(1), url: z.string().url() });
+// Publication resources are web pages/files. Other collections retain their
+// existing link contract until their own rendering workflows are reviewed.
+const publicationLink = link.extend({
+  url: link.shape.url.refine((value) => /^https?:\/\//i.test(value), "Publication resource URLs must use explicit HTTP or HTTPS")
+});
 const localizedItem = z.object({
   titleZh: z.string().min(1),
   titleEn: z.string().min(1),
@@ -37,9 +42,14 @@ export const publicationSchema = z.object({
   type: z.enum(["journal", "conference", "preprint", "book", "chapter", "thesis", "other"]),
   status: z.enum(["published", "accepted", "in-press", "preprint"]),
   volume: z.string().optional(), issue: z.string().optional(), pages: z.string().optional(),
-  abstractZh: z.string().optional(), abstractEn: z.string().optional(), links: z.array(link).default([]),
+  abstractZh: z.string().optional(), abstractEn: z.string().optional(), links: z.array(publicationLink).default([]),
   draft: z.boolean().default(false)
 });
+
+export const importedPublicationSchema = publicationSchema.pick({
+  citationKey: true, doi: true, title: true, authors: true, year: true, venue: true,
+  type: true, volume: true, issue: true, pages: true, status: true
+}).partial({ status: true });
 
 export const projectSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),

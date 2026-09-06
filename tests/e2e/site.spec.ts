@@ -127,7 +127,8 @@ for (const [route, heading, emptyMessage] of [
     await page.goto(atConfiguredBase(route));
     await expect(page.getByTestId("publications-page")).toBeVisible();
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-    await expect(page.getByText(emptyMessage, { exact: true })).toBeVisible();
+    const publications = page.locator("[data-publication]");
+    await expect(page.getByText(emptyMessage, { exact: true })).toHaveCount(await publications.count() === 0 ? 1 : 0);
     await expect(page.getByLabel(/年份|Year/)).toBeVisible();
     await expect(page.getByLabel(/成果类型|Type/)).toBeVisible();
   });
@@ -139,7 +140,9 @@ test("publication filters leave the static publication index readable without Ja
   try {
     await page.goto(atConfiguredBase("/publications/"));
     await expect(page.getByTestId("publications-page")).toBeVisible();
-    await expect(page.getByText("暂时没有已发布的论文成果。", { exact: true })).toBeVisible();
+    const publications = page.locator("[data-publication]");
+    await expect(page.getByText("暂时没有已发布的论文成果。", { exact: true })).toHaveCount(await publications.count() === 0 ? 1 : 0);
+    for (const publication of await publications.all()) await expect(publication).toBeVisible();
     await expect(page.getByLabel("年份")).toBeVisible();
     await expect(page.getByLabel("成果类型")).toBeVisible();
   } finally {

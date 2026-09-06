@@ -8,7 +8,7 @@
     "check": "astro check",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
-    "test:e2e": "pnpm build && playwright test",
+    "test:e2e": "pnpm build && playwright test && playwright test --config playwright.publications.config.ts",
     "verify": "pnpm check && pnpm test && pnpm build && tsx scripts/verify-dist.ts"
   },
   "engines": {
