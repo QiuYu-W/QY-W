@@ -1,0 +1,114 @@
+---
+import type { Publication } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+import { groupPublicationsByYear, isOwnerAuthor } from "../lib/publication-display";
+
+interface Props {
+  locale: Locale;
+  publications: Publication[];
+  ownerNames: string[];
+}
+
+const { locale, publications, ownerNames } = Astro.props;
+const copy = locale === "zh"
+  ? {
+      year: "年份", type: "成果类型", allYears: "全部年份", allTypes: "全部类型", noPublications: "暂时没有已发布的论文成果。",
+      originalTitle: "原始题名", doi: "DOI", venue: "刊物或会议", links: "相关链接",
+      types: { journal: "期刊论文", conference: "会议论文", preprint: "预印本", book: "图书", chapter: "图书章节", thesis: "学位论文", other: "其他" },
+      statuses: { published: "已发表", accepted: "已接收", "in-press": "待刊", preprint: "预印本" }
+    }
+  : {
+      year: "Year", type: "Type", allYears: "All years", allTypes: "All types", noPublications: "No publications have been published yet.",
+      originalTitle: "Original title", doi: "DOI", venue: "Venue", links: "Links",
+      types: { journal: "Journal article", conference: "Conference paper", preprint: "Preprint", book: "Book", chapter: "Book chapter", thesis: "Thesis", other: "Other" },
+      statuses: { published: "Published", accepted: "Accepted", "in-press": "In press", preprint: "Preprint" }
+    };
+const years = [...new Set(publications.map(({ data }) => data.year))].sort((left, right) => right - left);
+const types = [...new Set(publications.map(({ data }) => data.type))].sort();
+const groups = groupPublicationsByYear(publications.map((publication) => ({ year: publication.data.year, publication })));
+---
+
+<div class="publication-list">
+  <form class="filters" aria-label={locale === "zh" ? "论文成果筛选" : "Publication filters"} data-publication-filters>
+    <p>
+      <label for="publication-year">{copy.year}</label>
+      <select id="publication-year" data-publication-year>
+        <option value="">{copy.allYears}</option>
+        {years.map((year) => <option value={String(year)}>{year}</option>)}
+      </select>
+    </p>
+    <p>
+      <label for="publication-type">{copy.type}</label>
+      <select id="publication-type" data-publication-type>
+        <option value="">{copy.allTypes}</option>
+        {types.map((type) => <option value={type}>{copy.types[type]}</option>)}
+      </select>
+    </p>
+  </form>
+
+  {publications.length === 0 ? <p>{copy.noPublications}</p> : groups.map(({ year, publications: entries }) => (
+    <section aria-labelledby={`publication-year-${year}`} data-publication-year-group={year}>
+      <h2 id={`publication-year-${year}`}>{year}</h2>
+      <ol>
+        {entries.map(({ publication }) => {
+          const record = publication.data;
+          return <li data-publication data-year={record.year} data-type={record.type}>
+            <article>
+              <h3>{record.title}</h3>
+              {record.titleZh && <p class="translated-title"><span class="visually-hidden">{copy.originalTitle}: </span>{record.titleZh}</p>}
+              <p class="authors">{record.authors.map((author, index) => <>{index > 0 && ", "}{isOwnerAuthor(author, ownerNames) ? <strong>{author}</strong> : author}</>)}</p>
+              <p class="metadata"><span>{copy.venue}: {record.venue}</span><span>{copy.types[record.type]}</span><span>{copy.statuses[record.status]}</span></p>
+              {(record.volume || record.issue || record.pages) && <p class="metadata-detail">{[record.volume, record.issue, record.pages].filter(Boolean).join(" · ")}</p>}
+              <p class="links">
+                {record.doi && <a href={`https://doi.org/${record.doi}`}>{copy.doi}</a>}
+                {record.links.map((link) => <a href={link.url}>{link.label}</a>)}
+              </p>
+            </article>
+          </li>;
+        })}
+      </ol>
+    </section>
+  ))}
+</div>
+
+<script>
+  const yearFilter = document.querySelector<HTMLSelectElement>("[data-publication-year]");
+  const typeFilter = document.querySelector<HTMLSelectElement>("[data-publication-type]");
+  const publications = [...document.querySelectorAll<HTMLElement>("[data-publication]")];
+  const groups = [...document.querySelectorAll<HTMLElement>("[data-publication-year-group]")];
+
+  function applyFilters() {
+    const selectedYear = yearFilter?.value ?? "";
+    const selectedType = typeFilter?.value ?? "";
+    for (const publication of publications) {
+      publication.hidden = Boolean(
+        (selectedYear && publication.dataset.year !== selectedYear)
+        || (selectedType && publication.dataset.type !== selectedType)
+      );
+    }
+    for (const group of groups) {
+      group.hidden = [...group.querySelectorAll<HTMLElement>("[data-publication]")].every((publication) => publication.hidden);
+    }
+  }
+
+  yearFilter?.addEventListener("change", applyFilters);
+  typeFilter?.addEventListener("change", applyFilters);
+</script>
+
+<style>
+  .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0 0 2rem; }
+  .filters p { margin: 0; }
+  label { display: block; font-weight: 650; margin-bottom: 0.25rem; }
+  select { background: var(--color-paper); border: 1px solid color-mix(in srgb, var(--color-ink) 32%, transparent); border-radius: 0.2rem; color: inherit; font: inherit; padding: 0.35rem 0.5rem; }
+  section + section { margin-top: 2.5rem; }
+  h2 { border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent); font-size: 1.4rem; margin: 0 0 1rem; padding-bottom: 0.4rem; }
+  ol { list-style: none; margin: 0; padding: 0; }
+  li + li { border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent); margin-top: 1.25rem; padding-top: 1.25rem; }
+  h3, p { margin: 0; }
+  .translated-title, .metadata-detail { color: var(--color-muted); margin-top: 0.3rem; }
+  .authors, .metadata, .links { margin-top: 0.5rem; }
+  .metadata, .links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+  .metadata span + span::before { content: "·"; margin-right: 0.75rem; }
+  .links a + a::before { color: var(--color-muted); content: "·"; margin-right: 0.75rem; }
+  .visually-hidden { clip: rect(0 0 0 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+</style>

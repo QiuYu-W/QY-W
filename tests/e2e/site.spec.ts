@@ -118,3 +118,31 @@ test("homepages match localized empty states to their rendered same-locale posts
     await expect(page.getByText(emptyPostsMessage, { exact: true })).toHaveCount(renderedPostCount === 0 ? 1 : 0);
   }
 });
+
+for (const [route, heading, emptyMessage] of [
+  ["/publications/", "论文成果", "暂时没有已发布的论文成果。"],
+  ["/en/publications/", "Publications", "No publications have been published yet."]
+] as const) {
+  test(`${route} renders its localized publication index with progressive-enhancement filters`, async ({ page }) => {
+    await page.goto(atConfiguredBase(route));
+    await expect(page.getByTestId("publications-page")).toBeVisible();
+    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.getByText(emptyMessage, { exact: true })).toBeVisible();
+    await expect(page.getByLabel(/年份|Year/)).toBeVisible();
+    await expect(page.getByLabel(/成果类型|Type/)).toBeVisible();
+  });
+}
+
+test("publication filters leave the static publication index readable without JavaScript", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  try {
+    await page.goto(atConfiguredBase("/publications/"));
+    await expect(page.getByTestId("publications-page")).toBeVisible();
+    await expect(page.getByText("暂时没有已发布的论文成果。", { exact: true })).toBeVisible();
+    await expect(page.getByLabel("年份")).toBeVisible();
+    await expect(page.getByLabel("成果类型")).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});

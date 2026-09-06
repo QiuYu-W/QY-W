@@ -1,0 +1,13 @@
+---
+import PublicationsPage from "../views/PublicationsPage.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getProfile } from "../lib/content";
+import { routeFor } from "../lib/urls";
+
+const profile = await getProfile();
+const description = "按年份整理的论文成果与相关资源。";
+---
+
+<BaseLayout locale="zh" title={`论文成果 | ${profile.nameZh}`} description={description} canonicalPath={routeFor("zh", "publications")} alternatePath={routeFor("en", "publications")}>
+  <PublicationsPage locale="zh" />
+</BaseLayout>

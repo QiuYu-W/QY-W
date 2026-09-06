@@ -1,0 +1,13 @@
+---
+import PublicationsPage from "../../views/PublicationsPage.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getProfile } from "../../lib/content";
+import { routeFor } from "../../lib/urls";
+
+const profile = await getProfile();
+const description = "Publications and related resources, organized by year.";
+---
+
+<BaseLayout locale="en" title={`Publications | ${profile.nameEn}`} description={description} canonicalPath={routeFor("en", "publications")} alternatePath={routeFor("zh", "publications")}>
+  <PublicationsPage locale="en" />
+</BaseLayout>

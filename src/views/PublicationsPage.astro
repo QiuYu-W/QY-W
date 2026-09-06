@@ -1,0 +1,29 @@
+---
+import PublicationList from "../components/PublicationList.astro";
+import { getProfile, getPublishedPublications } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+
+interface Props { locale: Locale; }
+
+const { locale } = Astro.props;
+const [profile, publications] = await Promise.all([getProfile(), getPublishedPublications()]);
+const copy = locale === "zh"
+  ? { heading: "论文成果", description: "按年份整理的论文成果与相关资源。" }
+  : { heading: "Publications", description: "Publications and related resources, organized by year." };
+const ownerNames = [profile.nameZh, profile.nameEn, ...profile.authorAliases];
+---
+
+<article class="publications-page" data-testid="publications-page">
+  <header>
+    <h1>{copy.heading}</h1>
+    <p>{copy.description}</p>
+  </header>
+  <PublicationList locale={locale} publications={publications} ownerNames={ownerNames} />
+</article>
+
+<style>
+  .publications-page { max-width: 60rem; padding-top: clamp(3rem, 8vw, 6rem); }
+  header { margin-bottom: 2.5rem; }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  header p { color: var(--color-muted); font-size: 1.1rem; margin: 1rem 0 0; }
+</style>
