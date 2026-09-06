@@ -2,6 +2,7 @@
 import CountLinks from "../components/CountLinks.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getHomepageCounts, getProfile, getPublishedPosts } from "../lib/content";
+import { selectHomepagePosts } from "../lib/homepage-posts";
 import { alternateLocale, type Locale } from "../lib/i18n";
 import { assetUrl, routeFor } from "../lib/urls";
 
@@ -15,6 +16,7 @@ const [profile, counts, posts] = await Promise.all([
   getHomepageCounts(),
   getPublishedPosts(locale)
 ]);
+const latestPosts = selectHomepagePosts(posts);
 const copy = locale === "zh"
   ? {
       name: profile.nameZh,
@@ -76,9 +78,9 @@ const canonicalPath = routeFor(locale, "home");
 
   <section class="latest-posts" aria-labelledby="latest-posts-heading" data-testid="homepage-latest-posts">
     <h2 id="latest-posts-heading">{copy.latestHeading}</h2>
-    {posts.length > 0 ? (
+    {latestPosts.kind === "posts" ? (
       <ol>
-        {posts.slice(0, 2).map((post) => (
+        {latestPosts.posts.map((post) => (
           <li>
             <article data-testid="homepage-post">
               <h3><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h3>

@@ -6,8 +6,20 @@ const atConfiguredBase = (path: string) => `${basePath}${path}`;
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const routes = ["/", "/en/", "/about/", "/en/about/"];
 const localizedPages = [
-  { route: "/", locale: "zh", labels: ["论文成果", "科研项目", "博客文章"], hrefs: ["/publications/", "/projects/", "/blog/"] },
-  { route: "/en/", locale: "en", labels: ["Publications", "Projects", "Blog posts"], hrefs: ["/en/publications/", "/en/projects/", "/en/blog/"] }
+  {
+    route: "/",
+    locale: "zh",
+    labels: ["论文成果", "科研项目", "博客文章"],
+    hrefs: ["/publications/", "/projects/", "/blog/"],
+    emptyPostsMessage: "暂时没有已发布的博客文章。"
+  },
+  {
+    route: "/en/",
+    locale: "en",
+    labels: ["Publications", "Projects", "Blog posts"],
+    hrefs: ["/en/publications/", "/en/projects/", "/en/blog/"],
+    emptyPostsMessage: "No blog posts have been published yet."
+  }
 ] as const;
 
 async function expectNoRejectedControls(page: import("@playwright/test").Page, locale: "zh" | "en") {
@@ -56,8 +68,10 @@ for (const { route, locale, labels, hrefs } of localizedPages) {
   test(`${locale} homepage limits posts to two and keeps any rendered post in its locale`, async ({ page }) => {
     await page.goto(atConfiguredBase(route));
     const posts = page.getByTestId("homepage-post");
-    expect(await posts.count()).toBeLessThanOrEqual(2);
-    for (let index = 0; index < await posts.count(); index += 1) {
+    const renderedPostCount = await posts.count();
+
+    expect(renderedPostCount).toBeLessThanOrEqual(2);
+    for (let index = 0; index < renderedPostCount; index += 1) {
       await expect(posts.nth(index).getByRole("link")).toHaveAttribute("href", new RegExp(`^${escapeForRegExp(atConfiguredBase(locale === "zh" ? "/blog/" : "/en/blog/"))}`));
     }
   });
@@ -96,10 +110,11 @@ for (const [route, expectedStructure] of [
   });
 }
 
-test("homepages explain empty same-locale post collections", async ({ page }) => {
-  await page.goto(atConfiguredBase("/"));
-  await expect(page.getByText("暂时没有已发布的博客文章。")).toBeVisible();
+test("homepages match localized empty states to their rendered same-locale posts", async ({ page }) => {
+  for (const { route, emptyPostsMessage } of localizedPages) {
+    await page.goto(atConfiguredBase(route));
+    const renderedPostCount = await page.getByTestId("homepage-post").count();
 
-  await page.goto(atConfiguredBase("/en/"));
-  await expect(page.getByText("No blog posts have been published yet.")).toBeVisible();
+    await expect(page.getByText(emptyPostsMessage, { exact: true })).toHaveCount(renderedPostCount === 0 ? 1 : 0);
+  }
 });
