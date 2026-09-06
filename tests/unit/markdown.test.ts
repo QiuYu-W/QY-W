@@ -39,3 +39,15 @@ it("returns deterministic collision-suffixed h2 and h3 metadata", () => {
   expect(html).toContain('<h2 id="methods">Methods</h2>');
   expect(html).toContain('<h3 id="methods-2">Methods</h3>');
 });
+
+it("keeps heading IDs unique when repeated headings precede a natural suffix", () => {
+  const { headings } = renderTrustedMarkdown("## Methods\n\n## Methods\n\n## Methods 2");
+
+  expect(headings.map(({ id }) => id)).toEqual(["methods", "methods-2", "methods-2-2"]);
+});
+
+it("keeps heading IDs unique when a natural suffix precedes a repeated heading", () => {
+  const { headings } = renderTrustedMarkdown("## Methods\n\n## Methods 2\n\n## Methods");
+
+  expect(headings.map(({ id }) => id)).toEqual(["methods", "methods-2", "methods-3"]);
+});

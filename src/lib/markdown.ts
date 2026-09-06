@@ -56,14 +56,20 @@ export function renderTrustedMarkdown(source: string, basePath = import.meta.env
     if (value) $(element).attr("srcset", prefixSrcset(value, normalizedBase));
   });
 
-  const usedIds = new Map<string, number>();
+  const usedIds = new Set<string>();
+  const nextSuffixByBaseId = new Map<string, number>();
   const headings: MarkdownHeading[] = [];
   $("h2, h3").each((_, element) => {
     const text = $(element).text().replace(/\s+/g, " ").trim();
     const baseId = headingId(text);
-    const occurrence = (usedIds.get(baseId) ?? 0) + 1;
-    usedIds.set(baseId, occurrence);
-    const id = occurrence === 1 ? baseId : `${baseId}-${occurrence}`;
+    let suffix = nextSuffixByBaseId.get(baseId) ?? 1;
+    let id = suffix === 1 ? baseId : `${baseId}-${suffix}`;
+    while (usedIds.has(id)) {
+      suffix += 1;
+      id = `${baseId}-${suffix}`;
+    }
+    nextSuffixByBaseId.set(baseId, suffix + 1);
+    usedIds.add(id);
     const depth = element.tagName === "h2" ? 2 : 3;
     $(element).attr("id", id);
     headings.push({ depth, id, text });

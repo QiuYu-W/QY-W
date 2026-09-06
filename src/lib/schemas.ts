@@ -7,6 +7,9 @@ const link = z.object({ label: z.string().min(1), url: z.string().url() });
 const publicationLink = link.extend({
   url: link.shape.url.refine((value) => /^https?:\/\//i.test(value), "Publication resource URLs must use explicit HTTP or HTTPS")
 });
+const projectLink = link.extend({
+  url: link.shape.url.refine((value) => /^https?:\/\//i.test(value), "Project resource URLs must use explicit HTTP or HTTPS")
+});
 const localizedItem = z.object({
   titleZh: z.string().min(1),
   titleEn: z.string().min(1),
@@ -57,7 +60,7 @@ export const projectSchema = z.object({
   bodyZh: z.string().min(1), bodyEn: z.string().min(1), start: isoDate, end: optionalIsoDate,
   status: z.enum(["active", "completed", "paused"]), roleZh: z.string().min(1), roleEn: z.string().min(1),
   cover: z.string().optional(), coverAltZh: z.string().default(""), coverAltEn: z.string().default(""),
-  links: z.array(link).default([]), publicationKeys: z.array(z.string()).default([]),
+  links: z.array(projectLink).default([]), publicationKeys: z.array(z.string()).default([]),
   draft: z.boolean().default(false)
 });
 
