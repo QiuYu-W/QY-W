@@ -1,0 +1,42 @@
+name: Import publications
+
+on:
+  workflow_dispatch:
+    inputs:
+      payload:
+        description: Pages CMS action context
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-publications-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsx scripts/import-bibtex.ts --input imports/publications.bib --output src/data/publications
+      - run: pnpm check
+      - run: pnpm test:unit
+      - run: pnpm build
+      - name: Commit imported publications
+        run: |
+          git add -- src/data/publications
+          if git diff --cached --quiet -- src/data/publications; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "content(publications): import BibTeX"
+          git push
