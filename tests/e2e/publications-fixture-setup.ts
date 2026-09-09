@@ -4,6 +4,7 @@ import { build } from "astro";
 import { parse, stringify } from "yaml";
 import startPreview from "./global-setup";
 import { fixtureProjectPublication, writeProjectFixtures } from "./project-fixtures";
+import { writeBlogFixtures } from "./blog-fixtures";
 
 /** Build real routes with synthetic records only inside a disposable test root. */
 export default async function setupPublicationsFixture() {
@@ -33,6 +34,7 @@ export default async function setupPublicationsFixture() {
     for (const record of records) await writeFile(join(publicationDirectory, `${record.citationKey}.yaml`), stringify({ ...record, venue: "Fixture venue", status: "published", links: [{ label: "Fixture resource", url: "https://example.org/resource" }], draft: false }));
     await writeFile(join(publicationDirectory, "fixture-project-publication.yaml"), stringify(fixtureProjectPublication));
     await writeProjectFixtures(fixtureRoot);
+    await writeBlogFixtures(fixtureRoot);
     process.chdir(fixtureRoot);
     await build({ root: fixtureRoot });
     // Reuse the approved strict-port/readiness/stop lifecycle unchanged.

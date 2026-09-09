@@ -4,6 +4,7 @@ import { build } from "astro";
 import { stringify } from "yaml";
 import startPreview from "./global-setup";
 import { fixtureProjectPublication, writeProjectFixtures } from "./project-fixtures";
+import { writeBlogFixtures } from "./blog-fixtures";
 
 /** Build project routes from disposable content without adding fictional owner content. */
 export default async function setupProjectsFixture() {
@@ -17,6 +18,7 @@ export default async function setupProjectsFixture() {
     await cp(join(projectRoot, "public"), join(fixtureRoot, "public"), { recursive: true });
     for (const file of ["astro.config.mjs", "package.json", "tsconfig.json"]) await cp(join(projectRoot, file), join(fixtureRoot, file));
     await writeProjectFixtures(fixtureRoot);
+    await writeBlogFixtures(fixtureRoot);
     const publicationDirectory = join(fixtureRoot, "src/data/publications");
     await writeFile(join(publicationDirectory, "fixture-project-publication.yaml"), stringify(fixtureProjectPublication));
     process.chdir(fixtureRoot);

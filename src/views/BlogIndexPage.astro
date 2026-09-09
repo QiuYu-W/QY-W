@@ -1,0 +1,22 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BlogExplorer from "../components/BlogExplorer.astro";
+import { getProfile, getPublishedPosts } from "../lib/content";
+import { alternateLocale, type Locale } from "../lib/i18n";
+import { assetUrl, routeFor } from "../lib/urls";
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const posts = await getPublishedPosts(locale);
+const profile = await getProfile();
+const title = locale === "zh" ? "科研博客" : "Research blog";
+const description = locale === "zh" ? "研究笔记、方法与实践。" : "Research notes, methods and practice.";
+---
+<BaseLayout locale={locale} title={`${title} | ${locale === "zh" ? profile.nameZh : profile.nameEn}`} description={description} canonicalPath={routeFor(locale, "blog")} alternatePath={routeFor(alternateLocale(locale), "blog")}>
+  <header class="blog-header"><h1>{title}</h1><p>{description}</p><a href={assetUrl(locale === "zh" ? "/rss.xml" : "/en/rss.xml")}>RSS</a></header>
+  <BlogExplorer locale={locale} posts={posts} />
+</BaseLayout>
+<style>
+  .blog-header { padding-top: clamp(3rem, 8vw, 6rem); margin-bottom: 2rem; }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  p { color: var(--color-muted); }
+</style>

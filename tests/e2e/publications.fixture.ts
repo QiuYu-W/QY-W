@@ -9,8 +9,8 @@ for (const [route, translationLabel] of [["/publications/", "中文译名"], ["/
     const records = page.locator("[data-publication]");
     const visibleRecords = page.locator("[data-publication]:visible h3");
     const visibleYears = page.locator("[data-publication-year-group]:visible h2");
-    await expect(records).toHaveCount(3);
-    await expect(visibleYears).toHaveText(["2026", "2024"]);
+    await expect(records).toHaveCount(4);
+    await expect(visibleYears).toHaveText(["2026", "2025", "2024"]);
     await expect(page.locator(".authors strong")).toHaveText(["F. OWNER", "测试作者", "fixture owner"]);
     await expect(page.locator(".authors strong", { hasText: "Fixture Owner Jr." })).toHaveCount(0);
     await page.locator("[data-publication-year]").selectOption("2024");
@@ -23,10 +23,10 @@ for (const [route, translationLabel] of [["/publications/", "中文译名"], ["/
     await expect(visibleRecords).toHaveText(["Fixture new conference"]);
     await expect(visibleYears).toHaveText(["2026"]);
     await page.locator("[data-publication-type]").selectOption("journal");
-    await expect(visibleRecords).toHaveText(["Fixture new journal", "Fixture old journal"]);
+    await expect(visibleRecords).toHaveText(["Fixture new journal", "Fixture project publication", "Fixture old journal"]);
     await page.locator("[data-publication-type]").selectOption("");
-    await expect(visibleRecords).toHaveCount(3);
-    await expect(visibleYears).toHaveText(["2026", "2024"]);
+    await expect(visibleRecords).toHaveCount(4);
+    await expect(visibleYears).toHaveText(["2026", "2025", "2024"]);
     const violations = (await new AxeBuilder({ page }).analyze()).violations;
     expect(violations.filter(({ impact }) => ["serious", "critical"].includes(impact ?? ""))).toEqual([]);
   });
@@ -42,11 +42,11 @@ for (const [route, translationLabel] of [["/publications/", "中文译名"], ["/
     try {
       const page = await context.newPage();
       await page.goto(`${base}${route}`);
-      await expect(page.locator("[data-publication]:visible h3")).toHaveText(["Fixture new conference", "Fixture new journal", "Fixture old journal"]);
-      await expect(page.locator("[data-publication-year-group]:visible h2")).toHaveText(["2026", "2024"]);
+      await expect(page.locator("[data-publication]:visible h3")).toHaveText(["Fixture new conference", "Fixture new journal", "Fixture project publication", "Fixture old journal"]);
+      await expect(page.locator("[data-publication-year-group]:visible h2")).toHaveText(["2026", "2025", "2024"]);
       // Selecting a disabled-enhancement filter cannot remove static content.
       await page.locator("[data-publication-year]").selectOption("2024");
-      await expect(page.locator("[data-publication]:visible")).toHaveCount(3);
+      await expect(page.locator("[data-publication]:visible")).toHaveCount(4);
     } finally {
       await context.close();
     }

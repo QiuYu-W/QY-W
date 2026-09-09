@@ -1,0 +1,92 @@
+---
+import type { BlogPost } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+import { assetUrl, routeFor } from "../lib/urls";
+interface Props { locale: Locale; posts: BlogPost[] }
+const { locale, posts } = Astro.props;
+const copy = locale === "zh"
+  ? { languages: "文章语言", search: "搜索文章", category: "分类", tag: "标签", all: "全部", empty: "暂时没有已发布的博客文章。", noResults: "没有匹配的文章。" }
+  : { languages: "Article language", search: "Search posts", category: "Category", tag: "Tag", all: "All", empty: "No blog posts have been published yet.", noResults: "No matching posts." };
+const categories = [...new Set(posts.map(({ data }) => data.category))].sort();
+const tags = [...new Set(posts.flatMap(({ data }) => data.tags))].sort();
+---
+<section data-blog-explorer data-locale={locale} data-index-url={assetUrl("/search-index.json")}>
+  <nav aria-label={copy.languages} class="languages">
+    <a href={routeFor("zh", "blog")} aria-current={locale === "zh" ? "page" : undefined}>中文</a>
+    <a href={routeFor("en", "blog")} aria-current={locale === "en" ? "page" : undefined}>English</a>
+  </nav>
+  <div class="filters">
+    <label>{copy.search}<input type="search" data-testid="blog-search" data-search disabled /></label>
+    <label>{copy.category}<select data-testid="blog-category" data-category disabled><option value="">{copy.all}</option>{categories.map((category) => <option value={category}>{category}</option>)}</select></label>
+    <label>{copy.tag}<select data-testid="blog-tag" data-tag disabled><option value="">{copy.all}</option>{tags.map((tag) => <option value={tag}>{tag}</option>)}</select></label>
+  </div>
+  {posts.length === 0 && <p>{copy.empty}</p>}
+  <div class="post-list">
+    {posts.map((post) => <article data-blog-post data-post-id={post.id}>
+      <h2><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h2>
+      <p>{post.data.summary}</p>
+      <p class="metadata"><time datetime={post.data.publishedAt.toISOString()}>{post.data.publishedAt.toISOString().slice(0, 10)}</time> · {post.data.category}{post.data.tags.length > 0 && ` · ${post.data.tags.join(" · ")}`}</p>
+    </article>)}
+  </div>
+  <p data-testid="blog-no-results" data-no-results role="status" hidden>{copy.noResults}</p>
+</section>
+<script>
+  import MiniSearch from "minisearch";
+  import type { SearchDocument } from "../lib/search";
+  for (const explorer of document.querySelectorAll<HTMLElement>("[data-blog-explorer]")) {
+    const search = explorer.querySelector<HTMLInputElement>("[data-search]")!;
+    const category = explorer.querySelector<HTMLSelectElement>("[data-category]")!;
+    const tag = explorer.querySelector<HTMLSelectElement>("[data-tag]")!;
+    const noResults = explorer.querySelector<HTMLElement>("[data-no-results]")!;
+    const rows = [...explorer.querySelectorAll<HTMLElement>("[data-blog-post]")];
+    const restore = () => {
+      for (const row of rows) row.hidden = false;
+      for (const control of [search, category, tag]) control.disabled = true;
+      noResults.hidden = true;
+    };
+    async function enhance() {
+      try {
+        const response = await fetch(explorer.dataset.indexUrl!);
+        if (!response.ok) throw new Error("Search index unavailable");
+        const documents: SearchDocument[] = (await response.json()).filter((doc: SearchDocument) => doc.language === explorer.dataset.locale);
+        const byId = new Map(documents.map((doc) => [doc.id, doc]));
+        if (rows.some((row) => !byId.has(row.dataset.postId!))) throw new Error("Incomplete search index");
+        const segmenter = new Intl.Segmenter(explorer.dataset.locale, { granularity: "word" });
+        const index = new MiniSearch<SearchDocument>({
+          fields: ["title", "summary", "text", "category", "tags"],
+          tokenize: (text) => [...segmenter.segment(text)].filter((part) => part.isWordLike).map((part) => part.segment),
+          searchOptions: { prefix: true, combineWith: "AND" }
+        });
+        index.addAll(documents);
+        const update = () => {
+          try {
+            const query = search.value.trim();
+            const matches = query ? new Set(index.search(query).map((result) => result.id)) : undefined;
+            let count = 0;
+            for (const row of rows) {
+              const doc = byId.get(row.dataset.postId!)!;
+              row.hidden = Boolean((matches && !matches.has(doc.id)) || (category.value && doc.category !== category.value) || (tag.value && !doc.tags.includes(tag.value)));
+              if (!row.hidden) count += 1;
+            }
+            noResults.hidden = count !== 0 || rows.length === 0;
+          } catch { restore(); }
+        };
+        search.addEventListener("input", update);
+        category.addEventListener("change", update);
+        tag.addEventListener("change", update);
+        for (const control of [search, category, tag]) control.disabled = false;
+      } catch { restore(); }
+    }
+    void enhance();
+  }
+</script>
+<style>
+  .languages { display: flex; gap: 1rem; margin-bottom: 1rem; }
+  .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
+  label { display: flex; flex-direction: column; gap: .4rem; max-width: 100%; }
+  input, select { background: var(--color-paper); border: 1px solid var(--color-muted); border-radius: 0; color: var(--color-ink); font: inherit; max-width: 100%; padding: .4rem; }
+  article { border-top: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent); padding: 1.5rem 0; }
+  h2 { margin: 0; }
+  .metadata { color: var(--color-muted); font-size: .9rem; }
+  [hidden] { display: none !important; }
+</style>

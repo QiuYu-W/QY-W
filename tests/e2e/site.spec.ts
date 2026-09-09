@@ -190,3 +190,109 @@ test("project Markdown reserves the layout main-content ID and keeps its anchor 
   await expect(page.locator("main#main-content")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 2, name: "Main content" })).toHaveAttribute("id", "main-content-2");
 });
+
+for (const locale of ["zh", "en"] as const) {
+  const prefix = locale === "zh" ? "" : "/en";
+  const other = locale === "zh" ? "/en" : "";
+  test(`blog ${locale} isolates routes and renders safe body, TOC, metadata and related posts`, async ({ page }) => {
+    const response = await page.goto(atConfiguredBase(`${prefix}/blog/fixture-alpha/`));
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(`${locale} fixture-alpha`);
+    await expect(page.locator("html")).toHaveAttribute("lang", locale === "zh" ? "zh-CN" : "en");
+    await expect(page.locator(".language-switch a").last()).toHaveAttribute("href", atConfiguredBase(`${other}/blog/fixture-alpha/`));
+    await expect(page.getByRole("img", { name: `${locale} fixture cover`, exact: true })).toHaveAttribute("src", atConfiguredBase("/fixtures/project-cover.svg"));
+    await expect(page.getByRole("img", { name: "Body image", exact: true })).toHaveAttribute("src", atConfiguredBase("/fixtures/project-cover.svg"));
+    await expect(page.getByRole("link", { name: "Fixture resource" })).toHaveAttribute("href", atConfiguredBase("/fixtures/project-cover.svg"));
+    await expect(page.locator("[data-blog-raw-html]")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Unsafe", exact: true })).toHaveAttribute("href", "");
+    await expect(page.locator("time[datetime='2025-02-03T00:00:00.000Z']")).toBeVisible();
+    await expect(page.locator("time[datetime='2025-03-01T00:00:00.000Z']")).toBeVisible();
+    await expect(page.getByTestId("post-toc").getByRole("link", { name: "Main content" })).toHaveAttribute("href", "#main-content-2");
+    const ids = await page.locator("[id]").evaluateAll((els) => els.map((el) => el.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    await expect(page.getByTestId("related-posts").getByRole("link", { name: `${locale} fixture-related`, exact: true })).toBeVisible();
+    await expect(page.getByTestId("related-posts")).not.toContainText("fixture-secret");
+    await expect(page.getByTestId("related-posts")).not.toContainText(`${locale === "zh" ? "en" : "zh"} fixture`);
+    const violations = (await new AxeBuilder({ page }).analyze()).violations;
+    expect(violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  });
+
+  test(`blog ${locale} static list stays complete without JavaScript and when search index fails`, async ({ browser, page }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    try {
+      const staticPage = await context.newPage();
+      await staticPage.goto(atConfiguredBase(`${prefix}/blog/`));
+      for (const slug of ["fixture-alpha", "fixture-beta", "fixture-related"]) {
+        await expect(staticPage.getByRole("link", { name: `${locale} ${slug}`, exact: true })).toBeVisible();
+      }
+      const docs = await (await page.request.get(atConfiguredBase("/search-index.json"))).json();
+      const expectedPosts = docs.filter((doc: { language: string }) => doc.language === locale);
+      await expect(staticPage.locator("[data-blog-post]")).toHaveCount(expectedPosts.length);
+      for (const row of await staticPage.locator("[data-blog-post]").all()) {
+        await expect(row).toBeVisible();
+        await expect(row).not.toContainText("fixture-secret");
+      }
+    } finally { await context.close(); }
+    await page.route("**/search-index.json", (route) => route.abort());
+    await page.goto(atConfiguredBase(`${prefix}/blog/`));
+    await expect(page.getByRole("link", { name: `${locale} fixture-alpha`, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: `${locale} fixture-beta`, exact: true })).toBeVisible();
+    await expect(page.getByTestId("blog-search")).toBeDisabled();
+  });
+
+  test(`search ${locale} combines body text category and tag without leaking the other language`, async ({ page }) => {
+    await page.goto(atConfiguredBase(`${prefix}/blog/`));
+    const search = page.getByTestId("blog-search");
+    await expect(search).toBeEnabled();
+    await search.fill(locale === "zh" ? "独有术语" : "quantumbanana");
+    const visible = page.locator("[data-blog-post]:visible");
+    await expect(visible).toHaveCount(1);
+    await expect(visible).toContainText(`${locale} fixture-alpha`);
+    await search.fill("");
+    await page.getByTestId("blog-category").selectOption("Methods");
+    await page.getByTestId("blog-tag").selectOption("alpha");
+    await expect(page.getByRole("link", { name: `${locale} fixture-alpha`, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: `${locale} fixture-beta`, exact: true })).toBeHidden();
+    await search.fill("zzznomatchzzz");
+    await expect(visible).toHaveCount(0);
+    await expect(page.getByTestId("blog-no-results")).toBeVisible();
+    await search.fill("");
+    await page.getByTestId("blog-category").selectOption("");
+    await page.getByTestId("blog-tag").selectOption("");
+    const links = await visible.locator("h2 a").evaluateAll((els) => els.map((el) => el.getAttribute("href")));
+    expect(links.every((href) => href?.startsWith(atConfiguredBase(`${prefix}/blog/`)))).toBe(true);
+    expect(links.indexOf(atConfiguredBase(`${prefix}/blog/fixture-alpha/`))).toBeLessThan(links.indexOf(atConfiguredBase(`${prefix}/blog/fixture-beta/`)));
+  });
+
+  test(`RSS ${locale} contains only published locale URLs under SITE_URL`, async ({ request }) => {
+    const response = await request.get(atConfiguredBase(`${prefix}/rss.xml`));
+    expect(response.status()).toBe(200);
+    const xml = await response.text();
+    const site = new URL(process.env.SITE_URL || "http://localhost:4321");
+    expect(xml).toContain(`${site.origin}${atConfiguredBase(`${prefix}/blog/fixture-alpha/`)}`);
+    expect(xml).toContain(`${locale} fixture-alpha`);
+    expect(xml).not.toContain(`${locale === "zh" ? "en" : "zh"} fixture-alpha`);
+    expect(xml).not.toContain("fixture-secret");
+  });
+}
+
+test("blog untranslated switch falls back to index and draft routes never exist", async ({ page }) => {
+  await page.goto(atConfiguredBase("/blog/fixture-single/"));
+  await expect(page.locator(".language-switch a").last()).toHaveAttribute("href", atConfiguredBase("/en/blog/"));
+  await expect(page.getByRole("img", { name: "zh fixture-single", exact: true })).toHaveAttribute("src", atConfiguredBase("/fixtures/project-cover.svg"));
+  for (const route of ["/en/blog/fixture-single/", "/blog/fixture-secret/", "/en/blog/fixture-secret/"]) {
+    expect((await page.goto(atConfiguredBase(route)))?.status()).toBe(404);
+  }
+});
+
+test("search JSON includes both published languages and excludes drafts", async ({ request }) => {
+  const response = await request.get(atConfiguredBase("/search-index.json"));
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"]).toContain("application/json");
+  const docs = await response.json();
+  for (const [language, prefix] of [["zh", ""], ["en", "/en"]]) {
+    expect(docs).toContainEqual(expect.objectContaining({ language, title: `${language} fixture-alpha`, url: atConfiguredBase(`${prefix}/blog/fixture-alpha/`), text: expect.stringContaining("quantumbanana") }));
+  }
+  expect(JSON.stringify(docs)).not.toContain("fixture-secret");
+});
