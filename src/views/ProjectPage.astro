@@ -23,7 +23,7 @@ const status = locale === "zh"
 const copy = locale === "zh"
   ? { status: "状态", period: "项目周期", role: "个人角色", links: "项目链接", publications: "关联论文" }
   : { status: "Status", period: "Project period", role: "Role", links: "Project links", publications: "Associated publications" };
-const { html } = renderTrustedMarkdown(body);
+const { html } = renderTrustedMarkdown(body, undefined, ["main-content"]);
 ---
 
 <article class="project-page" data-testid="project-page">

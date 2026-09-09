@@ -39,7 +39,7 @@ function headingId(text: string): string {
 }
 
 /** Render repository-authored Markdown without permitting executable raw HTML. */
-export function renderTrustedMarkdown(source: string, basePath = import.meta.env.BASE_URL): { html: string; headings: MarkdownHeading[] } {
+export function renderTrustedMarkdown(source: string, basePath = import.meta.env.BASE_URL, reservedIds: Iterable<string> = []): { html: string; headings: MarkdownHeading[] } {
   const $ = load(micromark(source, { allowDangerousHtml: false, allowDangerousProtocol: true }), null, false);
   const normalizedBase = normalizedBasePath(basePath);
 
@@ -56,7 +56,7 @@ export function renderTrustedMarkdown(source: string, basePath = import.meta.env
     if (value) $(element).attr("srcset", prefixSrcset(value, normalizedBase));
   });
 
-  const usedIds = new Set<string>();
+  const usedIds = new Set(reservedIds);
   const nextSuffixByBaseId = new Map<string, number>();
   const headings: MarkdownHeading[] = [];
   $("h2, h3").each((_, element) => {

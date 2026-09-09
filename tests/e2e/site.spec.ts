@@ -177,3 +177,16 @@ test("project Markdown keeps base-aware paths while raw HTML is not rendered", a
   await expect(page.locator("[data-project-raw-html]")).toHaveCount(0);
   await expect(page.getByText("Fixture project publication", { exact: true })).toBeVisible();
 });
+
+test("project Markdown reserves the layout main-content ID and keeps its anchor stable", async ({ page }) => {
+  await page.goto(atConfiguredBase("/projects/robust-feature-selection/"));
+  const duplicateIds = await page.locator("[id]").evaluateAll((elements) => {
+    const counts = new Map<string, number>();
+    for (const element of elements) counts.set(element.id, (counts.get(element.id) ?? 0) + 1);
+    return [...counts].filter(([, count]) => count > 1).map(([id]) => id);
+  });
+
+  expect(duplicateIds).toEqual([]);
+  await expect(page.locator("main#main-content")).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 2, name: "Main content" })).toHaveAttribute("id", "main-content-2");
+});
