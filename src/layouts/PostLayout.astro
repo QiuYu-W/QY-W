@@ -3,14 +3,14 @@ import BaseLayout from "./BaseLayout.astro";
 import { getProfile, type BlogPost } from "../lib/content";
 import type { MarkdownHeading } from "../lib/markdown";
 import { assetUrl, routeFor } from "../lib/urls";
-interface Props { post: BlogPost; alternatePath: string; html: string; headings: MarkdownHeading[]; related: BlogPost[] }
-const { post, alternatePath, html, headings, related } = Astro.props;
+interface Props { post: BlogPost; alternatePath?: string; languageSwitchPath: string; html: string; headings: MarkdownHeading[]; related: BlogPost[] }
+const { post, alternatePath, languageSwitchPath, html, headings, related } = Astro.props;
 const data = post.data;
 const locale = data.language;
 const profile = await getProfile();
 const copy = locale === "zh" ? { published: "发布日期", updated: "更新时间", toc: "目录", related: "相关文章", category: "分类", tags: "标签" } : { published: "Published", updated: "Updated", toc: "Contents", related: "Related posts", category: "Category", tags: "Tags" };
 ---
-<BaseLayout locale={locale} title={`${data.title} | ${locale === "zh" ? profile.nameZh : profile.nameEn}`} description={data.summary} canonicalPath={routeFor(locale, "blog", data.slug)} alternatePath={alternatePath} image={data.cover}>
+<BaseLayout locale={locale} title={`${data.title} | ${locale === "zh" ? profile.nameZh : profile.nameEn}`} description={data.summary} canonicalPath={routeFor(locale, "blog", data.slug)} alternatePath={alternatePath} languageSwitchPath={languageSwitchPath} image={data.cover}>
   <article class="post">
     <header>
       <h1>{data.title}</h1><p class="summary">{data.summary}</p>

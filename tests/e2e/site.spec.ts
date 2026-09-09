@@ -194,6 +194,32 @@ test("project Markdown reserves the layout main-content ID and keeps its anchor 
 for (const locale of ["zh", "en"] as const) {
   const prefix = locale === "zh" ? "" : "/en";
   const other = locale === "zh" ? "/en" : "";
+  test(`blog ${locale} translation metadata excludes the untranslated navigation fallback`, async ({ page }) => {
+    const slug = locale === "zh" ? "fixture-single" : "fixture-single-en";
+    const language = locale === "zh" ? "zh-CN" : "en";
+    const otherLanguage = locale === "zh" ? "en" : "zh-CN";
+    const siteOrigin = new URL(process.env.SITE_URL || "http://localhost:4321").origin;
+    const canonicalUrl = `${siteOrigin}${atConfiguredBase(`${prefix}/blog/${slug}/`)}`;
+    await page.goto(atConfiguredBase(`${prefix}/blog/${slug}/`));
+    await expect(page.locator(".language-switch a").last()).toHaveAttribute("href", atConfiguredBase(`${other}/blog/`));
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", canonicalUrl);
+    await expect(page.locator(`link[hreflang="${language}"]`)).toHaveAttribute("href", canonicalUrl);
+    await expect(page.locator(`link[hreflang="${otherLanguage}"]`)).toHaveCount(0);
+    if (locale === "zh") await expect(page.locator('link[hreflang="x-default"]')).toHaveAttribute("href", canonicalUrl);
+    else await expect(page.locator('link[hreflang="x-default"]')).toHaveCount(0);
+  });
+
+  test(`blog ${locale} translation metadata preserves paired posts and structural pages`, async ({ page }) => {
+    const otherLanguage = locale === "zh" ? "en" : "zh-CN";
+    const siteOrigin = new URL(process.env.SITE_URL || "http://localhost:4321").origin;
+    for (const path of ["/blog/fixture-alpha/", "/about/"]) {
+      await page.goto(atConfiguredBase(`${prefix}${path}`));
+      await expect(page.locator(".language-switch a").last()).toHaveAttribute("href", atConfiguredBase(`${other}${path}`));
+      await expect(page.locator(`link[hreflang="${otherLanguage}"]`)).toHaveAttribute("href", `${siteOrigin}${atConfiguredBase(`${other}${path}`)}`);
+      await expect(page.locator('link[hreflang="x-default"]')).toHaveAttribute("href", `${siteOrigin}${atConfiguredBase(path)}`);
+    }
+  });
+
   test(`blog ${locale} isolates routes and renders safe body, TOC, metadata and related posts`, async ({ page }) => {
     const response = await page.goto(atConfiguredBase(`${prefix}/blog/fixture-alpha/`));
     expect(response?.status()).toBe(200);

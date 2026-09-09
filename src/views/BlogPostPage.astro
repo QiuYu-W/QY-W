@@ -11,10 +11,11 @@ const locale = post.data.language;
 const other = alternateLocale(locale);
 // A shared slug identifies an explicitly authored counterpart; drafts cannot qualify.
 const translated = posts.find((entry) => entry.data.language === other && entry.data.slug === post.data.slug);
-const alternatePath = routeFor(other, "blog", translated?.data.slug);
+const alternatePath = translated ? routeFor(other, "blog", translated.data.slug) : undefined;
+const languageSwitchPath = alternatePath ?? routeFor(other, "blog");
 const related = posts.filter((entry) => entry.id !== post.id && entry.data.language === locale && (
   entry.data.category === post.data.category || entry.data.tags.some((tag) => post.data.tags.includes(tag))
 )).slice(0, 3);
 const { html, headings } = renderTrustedMarkdown(post.body ?? "", undefined, ["main-content"]);
 ---
-<PostLayout post={post} alternatePath={alternatePath} html={html} headings={headings} related={related} />
+<PostLayout post={post} alternatePath={alternatePath} languageSwitchPath={languageSwitchPath} html={html} headings={headings} related={related} />

@@ -11,10 +11,11 @@ interface Props {
   description: string;
   canonicalPath: string;
   alternatePath?: string;
+  languageSwitchPath?: string;
   image?: string;
 }
 
-const { locale, title, description, canonicalPath, alternatePath, image } = Astro.props;
+const { locale, title, description, canonicalPath, alternatePath, languageSwitchPath = alternatePath, image } = Astro.props;
 const siteUrl = Astro.site ?? Astro.url;
 const canonicalUrl = new URL(canonicalPath, siteUrl).href;
 const alternateUrl = alternatePath ? new URL(alternatePath, siteUrl).href : undefined;
@@ -50,7 +51,7 @@ const skipLabel = locale === "zh" ? "跳至主要内容" : "Skip to content";
   </head>
   <body>
     <a class="skip-link" href="#main-content">{skipLabel}</a>
-    <Header locale={locale} currentPath={canonicalPath} alternatePath={alternatePath} />
+    <Header locale={locale} currentPath={canonicalPath} alternatePath={languageSwitchPath} />
     <main id="main-content" tabindex="-1">
       <slot />
     </main>
