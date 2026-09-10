@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { assetUrl, routeFor } from "../lib/urls";
+---
+
+<BaseLayout
+  locale="zh"
+  title="404 · 页面不存在 · Page not found"
+  description="页面不存在或已移动。The page could not be found."
+  canonicalPath={assetUrl("/404.html")}
+  languageSwitchPath={routeFor("en", "home")}
+>
+  <article class="content-width not-found">
+    <h1>404</h1>
+    <section aria-labelledby="not-found-zh">
+      <h2 id="not-found-zh">页面不存在</h2>
+      <p>这个页面可能已移动，或网址有误。请返回首页继续浏览。</p>
+      <a href={routeFor("zh", "home")}>返回中文首页</a>
+    </section>
+    <section lang="en" aria-labelledby="not-found-en">
+      <h2 id="not-found-en">Page not found</h2>
+      <p>The page may have moved, or the address may be incorrect. Return home to continue browsing.</p>
+      <a href={routeFor("en", "home")}>Go to English home</a>
+    </section>
+  </article>
+</BaseLayout>
+
+<style>
+  .not-found { padding-block: 3rem; }
+  section + section { margin-top: 2rem; }
+</style>

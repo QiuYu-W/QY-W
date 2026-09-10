@@ -5,6 +5,55 @@ const basePath = new URL(process.env.SITE_URL || "http://localhost:4321").pathna
 const atConfiguredBase = (path: string) => `${basePath}${path}`;
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const routes = ["/", "/en/", "/about/", "/en/about/"];
+
+for (const prefix of ["", "/en"]) {
+  test(`${prefix || "zh"} main navigation and structural language switches reach real pages`, async ({ page }) => {
+    const paths = ["/", "/about/", "/publications/", "/projects/", "/blog/"];
+    for (const path of paths) {
+      await page.goto(atConfiguredBase(`${prefix}/`));
+      await page.getByRole("navigation", { name: prefix ? "Main navigation" : "主导航", exact: true }).locator(`a[href="${atConfiguredBase(`${prefix}${path}`)}"]`).click();
+      await expect(page).toHaveURL(new RegExp(`${escapeForRegExp(atConfiguredBase(`${prefix}${path}`))}$`));
+      await expect(page.locator("main")).toBeVisible();
+      const other = prefix ? "" : "/en";
+      await page.locator(".language-switch a").last().click();
+      await expect(page).toHaveURL(new RegExp(`${escapeForRegExp(atConfiguredBase(`${other}${path}`))}$`));
+      await expect(page.locator("html")).toHaveAttribute("lang", other ? "en" : "zh-CN");
+    }
+  });
+
+  test(`${prefix || "zh"} homepage totals match published records across the localized lists`, async ({ page }) => {
+    const selectors = ["[data-publication]", "[data-project-card]", "[data-blog-post]"];
+    for (const [index, selector] of selectors.entries()) {
+      await page.goto(atConfiguredBase(`${prefix}/`));
+      const link = page.getByTestId("content-counts").getByRole("link").nth(index);
+      const count = Number((await link.getAttribute("aria-label"))!.split(" ")[0]);
+      await link.click();
+      if (index === 2) {
+        // The shared homepage total counts both languages; each blog index shows its locale.
+        const localizedCount = await page.locator(selector).count();
+        await page.goto(atConfiguredBase(`${prefix ? "" : "/en"}/blog/`));
+        expect(localizedCount + await page.locator(selector).count()).toBe(count);
+      } else await expect(page.locator(selector)).toHaveCount(count);
+    }
+  });
+}
+
+test("404 explains the missing page in both languages and returns to either homepage", async ({ page }) => {
+  for (const [name, destination] of [["返回中文首页", "/"], ["Go to English home", "/en/"]]) {
+    const response = await page.goto(atConfiguredBase("/missing-task9-page/deep/"));
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("404");
+    await expect(page.locator("main")).toContainText("页面不存在");
+    await expect(page.locator("main [lang=en]")).toContainText("Page not found");
+    const violations = (await new AxeBuilder({ page }).analyze()).violations;
+    expect(violations.filter((item) => ["serious", "critical"].includes(item.impact ?? ""))).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const home = page.getByRole("link", { name, exact: true });
+    await expect(home).toHaveAttribute("href", atConfiguredBase(destination));
+    await home.click();
+    await expect(page.getByTestId("homepage-intro")).toBeVisible();
+  }
+});
 const localizedPages = [
   {
     route: "/",

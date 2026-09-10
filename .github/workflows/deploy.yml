@@ -1,0 +1,80 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  # GITHUB_TOKEN commits made by the importer do not trigger push workflows.
+  workflow_run:
+    workflows: [Import publications]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository))
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: ${{ vars.SITE_URL }}
+    steps:
+      # The import run's head_sha predates its bot commit. Rebuild current main,
+      # and never download artifacts or execute code from the triggering run.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Validate production site URL
+        run: |
+          node --input-type=module <<'NODE'
+          const value = process.env.SITE_URL || '';
+          try {
+            const url = new URL(value);
+            if (!value.startsWith('https://') || url.protocol !== 'https:' || !url.hostname || url.username || url.password ||
+                value.includes('?') || value.includes('#') || /\s/.test(value) || value.endsWith('/')) {
+              throw new Error('invalid production URL');
+            }
+          } catch {
+            console.error('SITE_URL must be a complete https URL without credentials, query, fragment, whitespace or a trailing slash');
+            process.exit(1);
+          }
+          NODE
+      - run: pnpm verify
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      # test:e2e rebuilds production dist before using isolated browser fixtures.
+      - run: pnpm verify:dist
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

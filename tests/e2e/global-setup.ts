@@ -3,7 +3,7 @@ import { preview } from "astro";
 const host = "127.0.0.1";
 const port = Number(process.env.PLAYWRIGHT_PORT || "4338");
 const origin = `http://${host}:${port}`;
-const basePath = new URL(process.env.SITE_URL || "http://localhost:4321").pathname;
+const basePath = `${new URL(process.env.SITE_URL || "http://localhost:4321").pathname.replace(/\/$/, "")}/`;
 
 export default async function globalSetup() {
   const server = await preview({

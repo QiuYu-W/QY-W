@@ -1,4 +1,6 @@
 import type { preview } from "astro";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const previewMock = vi.hoisted(() => vi.fn<typeof preview>());
@@ -40,6 +42,29 @@ describe("Playwright preview lifecycle", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+  });
+
+  it("checks the actual slash-terminated project homepage when SITE_URL has no trailing slash", async () => {
+    const server = createServer((request, response) => {
+      response.statusCode = request.url === "/QY-W/" ? 200 : 404;
+      response.end("fixture homepage");
+    });
+    await new Promise<void>((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const port = (server.address() as AddressInfo).port;
+    const stop = () => new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    vi.stubEnv("PLAYWRIGHT_PORT", String(port));
+    vi.stubEnv("SITE_URL", "https://example.com/QY-W");
+    previewMock.mockResolvedValue({ host: "127.0.0.1", port, stop, closed: async () => {} });
+    try {
+      const teardown = await runSetup();
+      await teardown();
+      expect(server.listening).toBe(false);
+    } finally {
+      if (server.listening) await stop();
+    }
   });
 
   it("uses the public preview API with strict port ownership and the configured readiness URL", async () => {
