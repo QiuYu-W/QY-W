@@ -1,0 +1,21 @@
+---
+import { getPublishedPosts, type BlogPost } from "../lib/content";
+import { alternateLocale } from "../lib/i18n";
+import { renderTrustedMarkdown } from "../lib/markdown";
+import { routeFor } from "../lib/urls";
+import PostLayout from "../layouts/PostLayout.astro";
+interface Props { post: BlogPost }
+const { post } = Astro.props;
+const posts = await getPublishedPosts();
+const locale = post.data.language;
+const other = alternateLocale(locale);
+// A shared slug identifies an explicitly authored counterpart; drafts cannot qualify.
+const translated = posts.find((entry) => entry.data.language === other && entry.data.slug === post.data.slug);
+const alternatePath = translated ? routeFor(other, "blog", translated.data.slug) : undefined;
+const languageSwitchPath = alternatePath ?? routeFor(other, "blog");
+const related = posts.filter((entry) => entry.id !== post.id && entry.data.language === locale && (
+  entry.data.category === post.data.category || entry.data.tags.some((tag) => post.data.tags.includes(tag))
+)).slice(0, 3);
+const { html, headings } = renderTrustedMarkdown(post.body ?? "", undefined, ["main-content"]);
+---
+<PostLayout post={post} alternatePath={alternatePath} languageSwitchPath={languageSwitchPath} html={html} headings={headings} related={related} />

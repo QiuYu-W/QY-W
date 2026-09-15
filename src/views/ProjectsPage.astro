@@ -1,0 +1,28 @@
+---
+import ProjectCard from "../components/ProjectCard.astro";
+import { getPublishedProjects } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+
+interface Props { locale: Locale; }
+
+const { locale } = Astro.props;
+const projects = await getPublishedProjects();
+const copy = locale === "zh"
+  ? { heading: "科研项目", description: "独立描述的科研项目、进展与相关成果。", empty: "暂时没有已发布的科研项目。" }
+  : { heading: "Research Projects", description: "Independently described research projects, progress, and related outputs.", empty: "No research projects have been published yet." };
+---
+
+<article class="projects-page" data-testid="projects-page">
+  <header>
+    <h1>{copy.heading}</h1>
+    <p>{copy.description}</p>
+  </header>
+  {projects.length === 0 ? <p>{copy.empty}</p> : <div>{projects.map((project) => <ProjectCard locale={locale} project={project} />)}</div>}
+</article>
+
+<style>
+  .projects-page { max-width: 60rem; padding-top: clamp(3rem, 8vw, 6rem); }
+  header { margin-bottom: 2.5rem; }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  header p { color: var(--color-muted); font-size: 1.1rem; margin: 1rem 0 0; }
+</style>

@@ -1,0 +1,37 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import { getProfile, type BlogPost } from "../lib/content";
+import type { MarkdownHeading } from "../lib/markdown";
+import { assetUrl, routeFor } from "../lib/urls";
+interface Props { post: BlogPost; alternatePath?: string; languageSwitchPath: string; html: string; headings: MarkdownHeading[]; related: BlogPost[] }
+const { post, alternatePath, languageSwitchPath, html, headings, related } = Astro.props;
+const data = post.data;
+const locale = data.language;
+const profile = await getProfile();
+const copy = locale === "zh" ? { published: "发布日期", updated: "更新时间", toc: "目录", related: "相关文章", category: "分类", tags: "标签" } : { published: "Published", updated: "Updated", toc: "Contents", related: "Related posts", category: "Category", tags: "Tags" };
+---
+<BaseLayout locale={locale} title={`${data.title} | ${locale === "zh" ? profile.nameZh : profile.nameEn}`} description={data.summary} canonicalPath={routeFor(locale, "blog", data.slug)} alternatePath={alternatePath} languageSwitchPath={languageSwitchPath} image={data.cover}>
+  <article class="post">
+    <header>
+      <h1>{data.title}</h1><p class="summary">{data.summary}</p>
+      <p>{copy.published}: <time datetime={data.publishedAt.toISOString()}>{data.publishedAt.toISOString().slice(0, 10)}</time>
+      {data.updatedAt && <span> · {copy.updated}: <time datetime={data.updatedAt.toISOString()}>{data.updatedAt.toISOString().slice(0, 10)}</time></span>}</p>
+      <p>{copy.category}: {data.category}{data.tags.length > 0 && ` · ${copy.tags}: ${data.tags.join(" · ")}`}</p>
+    </header>
+    {data.cover && <img class="cover" src={assetUrl(data.cover)} alt={data.coverAlt || data.title} />}
+    {headings.length > 0 && <nav aria-label={copy.toc} data-testid="post-toc"><h2>{copy.toc}</h2><ul>{headings.map((heading) => <li class:list={{ nested: heading.depth === 3 }}><a href={`#${heading.id}`}>{heading.text}</a></li>)}</ul></nav>}
+    <div class="prose" set:html={html} />
+    {related.length > 0 && <section data-testid="related-posts" aria-label={copy.related}><h2>{copy.related}</h2><ul>{related.map((entry) => <li><a href={routeFor(locale, "blog", entry.data.slug)}>{entry.data.title}</a></li>)}</ul></section>}
+  </article>
+</BaseLayout>
+<style>
+  .post { max-width: 46rem; min-width: 0; overflow-wrap: anywhere; padding-top: clamp(3rem, 8vw, 6rem); }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  .summary { font-size: 1.2rem; color: var(--color-muted); }
+  .cover { width: 100%; height: auto; margin: 1.5rem 0; }
+  nav { border-block: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent); padding-bottom: 1rem; }
+  .nested { margin-left: 1.25rem; }
+  .prose :global(img) { max-width: 100%; height: auto; }
+  .prose :global(pre) { overflow-x: auto; padding: 1rem; background: color-mix(in srgb, var(--color-ink) 5%, transparent); }
+  .prose :global(h2), section h2 { margin-top: 2.5rem; }
+</style>

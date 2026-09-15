@@ -1,0 +1,22 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="content-width">
+    <p>© {year}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+    color: var(--color-muted);
+    margin-top: 4rem;
+    padding-block: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+  }
+</style>

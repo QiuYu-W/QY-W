@@ -1,0 +1,75 @@
+---
+import type { Locale } from "../lib/i18n";
+import { routeFor } from "../lib/urls";
+import LanguageSwitch from "./LanguageSwitch.astro";
+
+interface Props {
+  locale: Locale;
+  currentPath: string;
+  alternatePath?: string;
+}
+
+const { locale, currentPath, alternatePath } = Astro.props;
+const labels = locale === "zh"
+  ? {
+      home: "首页",
+      about: "关于我",
+      publications: "论文成果",
+      projects: "科研项目",
+      blog: "科研博客",
+      navigation: "主导航"
+    }
+  : {
+      home: "Home",
+      about: "About",
+      publications: "Publications",
+      projects: "Projects",
+      blog: "Blog",
+      navigation: "Main navigation"
+    };
+
+const navigation = ["home", "about", "publications", "projects", "blog"] as const;
+---
+
+<header class="site-header">
+  <div class="content-width header-content">
+    <nav aria-label={labels.navigation}>
+      <ul>
+        {navigation.map((kind) => (
+          <li><a href={routeFor(locale, kind)}>{labels[kind]}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <LanguageSwitch locale={locale} currentPath={currentPath} alternatePath={alternatePath} />
+  </div>
+</header>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
+  }
+
+  .header-content {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding-block: 1rem;
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (max-width: 48rem) {
+    .header-content {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>

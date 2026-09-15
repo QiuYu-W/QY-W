@@ -1,0 +1,73 @@
+---
+import type { Locale } from "../lib/i18n";
+import { routeFor } from "../lib/urls";
+
+interface Props {
+  publications: number;
+  projects: number;
+  posts: number;
+  locale: Locale;
+}
+
+const { publications, projects, posts, locale } = Astro.props;
+const labels = locale === "zh"
+  ? { publications: "论文成果", projects: "科研项目", posts: "博客文章" }
+  : { publications: "Publications", projects: "Projects", posts: "Blog posts" };
+const counts = [
+  { key: "publications", count: publications, href: routeFor(locale, "publications") },
+  { key: "projects", count: projects, href: routeFor(locale, "projects") },
+  { key: "posts", count: posts, href: routeFor(locale, "blog") }
+] as const;
+---
+
+<section class="count-links" aria-label={locale === "zh" ? "内容概览" : "Content overview"} data-testid="content-counts">
+  {counts.map(({ key, count, href }) => (
+    <a href={href} aria-label={`${count} ${labels[key]}`}>
+      <span class="count" aria-hidden="true">{count}</span>
+      <span>{labels[key]}</span>
+    </a>
+  ))}
+</section>
+
+<style>
+  .count-links {
+    border-block: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-block: 3rem;
+  }
+
+  a {
+    color: inherit;
+    display: grid;
+    gap: 0.2rem;
+    padding: 1.25rem 1rem;
+    text-decoration: none;
+  }
+
+  a + a {
+    border-inline-start: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
+  }
+
+  a:hover {
+    color: var(--color-accent);
+  }
+
+  .count {
+    color: var(--color-accent);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 650;
+    line-height: 1;
+  }
+
+  @media (max-width: 34rem) {
+    .count-links {
+      grid-template-columns: 1fr;
+    }
+
+    a + a {
+      border-inline-start: 0;
+      border-top: 1px solid color-mix(in srgb, var(--color-ink) 18%, transparent);
+    }
+  }
+</style>

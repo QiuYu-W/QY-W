@@ -1,0 +1,190 @@
+media:
+  - name: images
+    label: 图片
+    input: public/media
+    output: /media
+    rename: safe
+    extensions: [png, jpg, jpeg, webp, avif, svg]
+  - name: bibtex
+    label: BibTeX 导入文件
+    input: imports
+    output: /imports
+    rename: false
+    extensions: [bib]
+
+components:
+  link:
+    type: object
+    fields:
+      - { name: label, label: 链接名称, type: string, required: true }
+      - { name: url, label: URL, type: string, required: true }
+  localizedItem:
+    type: object
+    fields:
+      - { name: titleZh, label: 中文标题, type: string, required: true }
+      - { name: titleEn, label: English title, type: string, required: true }
+      - { name: detailZh, label: 中文说明, type: text, required: true }
+      - { name: detailEn, label: English detail, type: text, required: true }
+      - { name: start, label: 开始时间, type: string }
+      - { name: end, label: 结束时间, type: string }
+
+content:
+  - name: profile
+    label: 个人资料 / Profile
+    type: file
+    path: src/data/profile/profile.yaml
+    format: yaml
+    operations: { delete: false, rename: false }
+    fields:
+      - { name: nameZh, label: 中文姓名, type: string, required: true }
+      - { name: nameEn, label: English name, type: string, required: true }
+      - { name: roleZh, label: 中文身份, type: string, required: true }
+      - { name: roleEn, label: English role, type: string, required: true }
+      - { name: statementZh, label: 中文简介, type: text, required: true }
+      - { name: statementEn, label: English statement, type: text, required: true }
+      - { name: bioZh, label: 中文详细介绍, type: rich-text, required: true, options: { format: markdown, media: images } }
+      - { name: bioEn, label: English biography, type: rich-text, required: true, options: { format: markdown, media: images } }
+      - { name: interestsZh, label: 中文研究兴趣, type: string, list: true }
+      - { name: interestsEn, label: English interests, type: string, list: true }
+      - { name: portrait, label: 头像, type: image, required: true, options: { media: images } }
+      - { name: portraitAltZh, label: 头像中文替代文字, type: string, required: true }
+      - { name: portraitAltEn, label: Portrait alt text, type: string, required: true }
+      - { name: education, label: 教育经历, component: localizedItem, list: true }
+      - { name: experience, label: 工作经历, component: localizedItem, list: true }
+      - { name: honors, label: 荣誉奖励, component: localizedItem, list: true }
+      - { name: service, label: 学术服务, component: localizedItem, list: true }
+      - { name: skillsZh, label: 中文技能, type: string, list: true }
+      - { name: skillsEn, label: English skills, type: string, list: true }
+      - { name: email, label: 邮箱, type: string, required: true }
+      - { name: links, label: 外部链接, component: link, list: true }
+      - { name: authorAliases, label: 论文作者名别名, type: string, list: true, description: 用于在作者列表中突出本人，例如姓名缩写形式 }
+
+  - name: publications
+    label: 论文成果 / Publications
+    type: collection
+    path: src/data/publications
+    format: yaml
+    filename: "{citationKey}.yaml"
+    view:
+      primary: title
+      fields: [title, year, type, status, draft]
+      sort: [year, title]
+      search: [title, titleZh, authors, venue, citationKey, doi]
+      default: { sort: year, order: desc }
+    fields:
+      - { name: citationKey, label: Citation key, type: string, required: true }
+      - { name: doi, label: DOI, type: string }
+      - { name: title, label: 论文标题, type: string, required: true }
+      - { name: titleZh, label: 中文标题（可选）, type: string }
+      - { name: authors, label: 作者, type: string, list: true, required: true }
+      - { name: year, label: 年份, type: number, required: true }
+      - { name: venue, label: 期刊或会议, type: string, required: true }
+      - name: type
+        label: 类型
+        type: select
+        required: true
+        options:
+          values: [journal, conference, preprint, book, chapter, thesis, other]
+      - name: status
+        label: 状态
+        type: select
+        required: true
+        options:
+          values: [published, accepted, in-press, preprint]
+      - { name: volume, label: 卷, type: string }
+      - { name: issue, label: 期, type: string }
+      - { name: pages, label: 页码, type: string }
+      - { name: abstractZh, label: 中文摘要, type: text }
+      - { name: abstractEn, label: English abstract, type: text }
+      - { name: links, label: 论文链接, component: link, list: true }
+      - { name: draft, label: 草稿, type: boolean, default: false }
+
+  - name: projects
+    label: 科研项目 / Projects
+    type: collection
+    path: src/data/projects
+    format: yaml-frontmatter
+    filename: "{slug}.md"
+    view:
+      primary: titleZh
+      fields: [titleZh, titleEn, start, status, draft]
+      sort: [start, titleZh]
+      search: [titleZh, titleEn, summaryZh, summaryEn, roleZh, roleEn]
+      default: { sort: start, order: desc }
+    fields:
+      - { name: slug, label: URL 标识, type: string, required: true, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+      - { name: titleZh, label: 中文标题, type: string, required: true }
+      - { name: titleEn, label: English title, type: string, required: true }
+      - { name: summaryZh, label: 中文摘要, type: text, required: true }
+      - { name: summaryEn, label: English summary, type: text, required: true }
+      - { name: bodyZh, label: 中文正文, type: rich-text, required: true, options: { format: markdown, media: images } }
+      - { name: bodyEn, label: English body, type: rich-text, required: true, options: { format: markdown, media: images } }
+      - { name: start, label: 开始日期, type: date, required: true, options: { format: yyyy-MM-dd } }
+      - { name: end, label: 结束日期, type: date, default: "", options: { format: yyyy-MM-dd } }
+      - name: status
+        label: 状态
+        type: select
+        required: true
+        options:
+          values: [active, completed, paused]
+      - { name: roleZh, label: 中文角色, type: string, required: true }
+      - { name: roleEn, label: English role, type: string, required: true }
+      - { name: cover, label: 封面, type: image, options: { media: images } }
+      - { name: coverAltZh, label: 封面中文替代文字, type: string }
+      - { name: coverAltEn, label: Cover alt text, type: string }
+      - { name: links, label: 项目链接, component: link, list: true }
+      - { name: publicationKeys, label: 关联 citation keys, type: string, list: true }
+      - { name: draft, label: 草稿, type: boolean, default: false }
+
+  - name: blog
+    label: 博客文章 / Blog
+    type: collection
+    path: src/data/blog
+    format: yaml-frontmatter
+    filename: "{slug}.md"
+    view:
+      primary: title
+      fields: [title, language, publishedAt, category, draft]
+      sort: [publishedAt, title]
+      search: [title, summary, category, tags]
+      default: { sort: publishedAt, order: desc }
+    fields:
+      - name: language
+        label: 文章语言
+        type: select
+        required: true
+        options:
+          values:
+            - { name: zh, label: 中文 }
+            - { name: en, label: English }
+      - { name: title, label: 标题, type: string, required: true }
+      - { name: summary, label: 摘要, type: text, required: true }
+      - { name: slug, label: URL 标识, type: string, required: true, pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$" }
+      - { name: publishedAt, label: 发布时间, type: date, required: true, options: { time: true, format: "yyyy-MM-dd'T'HH:mm" } }
+      - { name: updatedAt, label: 更新时间, type: date, default: "", options: { time: true, format: "yyyy-MM-dd'T'HH:mm" } }
+      - { name: category, label: 分类, type: string, required: true }
+      - { name: tags, label: 标签, type: string, list: true }
+      - { name: cover, label: 封面, type: image, options: { media: images } }
+      - { name: coverAlt, label: 封面替代文字, type: string }
+      - { name: draft, label: 草稿, type: boolean, default: true }
+      - { name: body, label: 正文, type: rich-text, required: true, options: { format: markdown, media: images } }
+
+settings:
+  commit:
+    identity: user
+    templates:
+      create: "content(create): {path}"
+      update: "content(update): {path}"
+      delete: "content(delete): {path}"
+      rename: "content(rename): {oldPath} -> {newPath}"
+
+actions:
+  - name: import-publications
+    label: 导入或更新 BibTeX
+    workflow: import-publications.yml
+    ref: current
+    cancelable: false
+    confirm:
+      title: 导入论文？
+      message: 将 imports/publications.bib 合并到论文集合；失败时不会写入部分结果。
+      button: 开始导入

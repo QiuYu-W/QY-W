@@ -1,0 +1,76 @@
+---
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import { alternateLocale, type Locale } from "../lib/i18n";
+import { assetUrl } from "../lib/urls";
+import "../styles/global.css";
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  canonicalPath: string;
+  alternatePath?: string;
+  languageSwitchPath?: string;
+  image?: string;
+}
+
+const { locale, title, description, canonicalPath, alternatePath, languageSwitchPath = alternatePath, image } = Astro.props;
+const siteUrl = Astro.site ?? Astro.url;
+const canonicalUrl = new URL(canonicalPath, siteUrl).href;
+const alternateUrl = alternatePath ? new URL(alternatePath, siteUrl).href : undefined;
+const defaultUrl = locale === "zh" ? canonicalUrl : alternateUrl;
+const imageUrl = image ? new URL(assetUrl(image), siteUrl).href : undefined;
+const language = locale === "zh" ? "zh-CN" : "en";
+const alternateLanguage = alternateLocale(locale) === "zh" ? "zh-CN" : "en";
+const ogLocale = locale === "zh" ? "zh_CN" : "en_US";
+const skipLabel = locale === "zh" ? "跳至主要内容" : "Skip to content";
+---
+
+<!doctype html>
+<html lang={language}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang={language} href={canonicalUrl} />
+    {alternateUrl && <link rel="alternate" hreflang={alternateLanguage} href={alternateUrl} />}
+    {defaultUrl && <link rel="alternate" hreflang="x-default" href={defaultUrl} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {imageUrl && <meta property="og:image" content={imageUrl} />}
+    <meta name="twitter:card" content={imageUrl ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {imageUrl && <meta name="twitter:image" content={imageUrl} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{skipLabel}</a>
+    <Header locale={locale} currentPath={canonicalPath} alternatePath={languageSwitchPath} />
+    <main id="main-content" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    background: var(--color-paper);
+    left: var(--page-gutter);
+    padding: 0.5rem 0.75rem;
+    position: absolute;
+    top: 0;
+    transform: translateY(-100%);
+    z-index: 1;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+</style>

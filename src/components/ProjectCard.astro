@@ -1,0 +1,41 @@
+---
+import type { Project } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+import { assetUrl, routeFor } from "../lib/urls";
+
+interface Props {
+  locale: Locale;
+  project: Project;
+}
+
+const { locale, project } = Astro.props;
+const record = project.data;
+const title = locale === "zh" ? record.titleZh : record.titleEn;
+const summary = locale === "zh" ? record.summaryZh : record.summaryEn;
+const coverAlt = locale === "zh" ? record.coverAltZh : record.coverAltEn;
+const status = locale === "zh"
+  ? { active: "进行中", completed: "已完成", paused: "已暂停" }[record.status]
+  : { active: "Active", completed: "Completed", paused: "Paused" }[record.status];
+---
+
+<article class="project-card" data-project-card>
+  {record.cover && <img src={assetUrl(record.cover)} alt={coverAlt || title} loading="lazy" />}
+  <div>
+    <p class="metadata">{record.start}{record.end && ` – ${record.end}`} · {status}</p>
+    <h2><a href={routeFor(locale, "projects", record.slug)}>{title}</a></h2>
+    <p>{summary}</p>
+  </div>
+</article>
+
+<style>
+  .project-card { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); }
+  .project-card + .project-card { border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent); margin-top: 1.5rem; padding-top: 1.5rem; }
+  img { aspect-ratio: 16 / 9; object-fit: cover; width: 100%; }
+  h2, p { margin: 0; }
+  h2 { font-size: 1.4rem; margin-top: 0.35rem; }
+  .metadata { color: var(--color-muted); font-size: 0.95rem; }
+  h2 + p { margin-top: 0.6rem; }
+  @media (min-width: 42rem) {
+    .project-card:has(img) { grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr); }
+  }
+</style>
