@@ -7,6 +7,18 @@ export interface MarkdownHeading {
   text: string;
 }
 
+/** Extract metadata text in an inert parser; this HTML must never be rendered. */
+export function markdownToPlainText(source: string): string {
+  const $ = load(micromark(source, { allowDangerousHtml: true }), null, false);
+  $("script, style, template").remove();
+  $("img").each((_, element) => {
+    $(element).replaceWith($("<span>").text($(element).attr("alt") ?? ""));
+  });
+  $("br, hr").replaceWith(" ");
+  $("p, div, li, blockquote, pre, h1, h2, h3, h4, h5, h6, tr").append(" ");
+  return $.root().text().replace(/\s+/g, " ").trim();
+}
+
 function normalizedBasePath(basePath: string): string {
   const trimmed = basePath.trim().replace(/^\/+|\/+$/g, "");
   return trimmed ? `/${trimmed}` : "";

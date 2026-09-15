@@ -4,6 +4,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { getHomepageCounts, getProfile, getPublishedPosts } from "../lib/content";
 import { selectHomepagePosts } from "../lib/homepage-posts";
 import { alternateLocale, type Locale } from "../lib/i18n";
+import { markdownToPlainText, renderTrustedMarkdown } from "../lib/markdown";
 import { assetUrl, routeFor } from "../lib/urls";
 
 interface Props {
@@ -46,12 +47,15 @@ const dateFormatter = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en", 
   day: "numeric"
 });
 const canonicalPath = routeFor(locale, "home");
+const biography = renderTrustedMarkdown(copy.bio, import.meta.env.BASE_URL, [
+  "main-content", "profile-name", "interests-heading", "latest-posts-heading"
+]);
 ---
 
 <BaseLayout
   locale={locale}
   title={`${copy.name} | ${copy.role}`}
-  description={copy.bio}
+  description={markdownToPlainText(copy.bio)}
   canonicalPath={canonicalPath}
   alternatePath={routeFor(alternateLocale(locale), "home")}
   image={profile.portrait}
@@ -61,7 +65,7 @@ const canonicalPath = routeFor(locale, "home");
       <p class="role">{copy.role}</p>
       <h1 id="profile-name">{copy.name}</h1>
       <p class="statement">{copy.statement}</p>
-      <p>{copy.bio}</p>
+      <div class="profile-bio" data-testid="profile-bio" lang={locale === "zh" ? "zh-CN" : "en"} set:html={biography.html} />
       <section aria-labelledby="interests-heading">
         <h2 id="interests-heading">{copy.interestsHeading}</h2>
         <ul class="interests">
@@ -95,6 +99,19 @@ const canonicalPath = routeFor(locale, "home");
 </BaseLayout>
 
 <style>
+  .profile-bio {
+    overflow-wrap: anywhere;
+  }
+
+  .profile-bio :global(img) {
+    height: auto;
+    max-width: 100%;
+  }
+
+  .profile-bio :global(pre) {
+    overflow-x: auto;
+  }
+
   .intro {
     align-items: center;
     display: grid;

@@ -5,6 +5,7 @@ import { parse, stringify } from "yaml";
 import startPreview from "./global-setup";
 import { fixtureProjectPublication, writeProjectFixtures } from "./project-fixtures";
 import { writeBlogFixtures } from "./blog-fixtures";
+import { writeProfileFixtures } from "./profile-fixtures";
 
 /** Build real routes with synthetic records only inside a disposable test root. */
 export default async function setupPublicationsFixture() {
@@ -35,6 +36,7 @@ export default async function setupPublicationsFixture() {
     await writeFile(join(publicationDirectory, "fixture-project-publication.yaml"), stringify(fixtureProjectPublication));
     await writeProjectFixtures(fixtureRoot);
     await writeBlogFixtures(fixtureRoot);
+    await writeProfileFixtures(fixtureRoot);
     process.chdir(fixtureRoot);
     await build({ root: fixtureRoot });
     // Reuse the approved strict-port/readiness/stop lifecycle unchanged.

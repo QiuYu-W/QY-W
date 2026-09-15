@@ -6,6 +6,38 @@ const atConfiguredBase = (path: string) => `${basePath}${path}`;
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const routes = ["/", "/en/", "/about/", "/en/about/"];
 
+for (const route of routes) {
+  test(`${route} renders the localized CMS biography as safe rich text with plain SEO`, async ({ page }) => {
+    const english = route.startsWith("/en/");
+    await page.goto(atConfiguredBase(route));
+    const bio = page.getByTestId("profile-bio");
+    await expect(bio.locator("strong")).toHaveText(english ? "English fixture" : "中文测试");
+    await expect(bio.locator("em")).toHaveText(english ? "emphasis" : "强调");
+    await expect(bio.locator("p").nth(1)).toHaveText(english ? "Second paragraph & content." : "第二段 & 内容。");
+    await expect(bio.locator("ul > li")).toHaveText(english ? ["First item", "Second item"] : ["列表一", "列表二"]);
+    await expect(bio).toHaveJSProperty("tagName", "DIV");
+    await expect(bio).toHaveAttribute("lang", english ? "en" : "zh-CN");
+    const image = bio.getByRole("img", { name: english ? "Test image" : "测试图片" });
+    await expect(image).toHaveAttribute("src", atConfiguredBase("/fixtures/project-cover.svg"));
+    expect(await image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+    await expect(bio.getByRole("link")).toHaveAttribute("href", atConfiguredBase("/fixtures/project-cover.svg"));
+    await expect(page.locator("[data-bio-raw-html]")).toHaveCount(0);
+    expect(await page.evaluate(() => "bioExecuted" in window)).toBe(false);
+    const ids = await page.locator("[id]").evaluateAll((elements) => elements.map((element) => element.id));
+    expect(new Set(ids).size).toBe(ids.length);
+    await expect(page.locator("main#main-content")).toHaveCount(1);
+    await expect(bio.getByRole("heading", { name: "Main content", exact: true })).toHaveAttribute("id", "main-content-2");
+    const description = english
+      ? "An English fixture with emphasis. Test resource Second paragraph & content. First item Second item Test image Main content Profile name Interests heading Latest posts heading About interests Education Experience Honors Service Skills Contact Profiles"
+      : "这是中文测试与强调。 测试资源 第二段 & 内容。 列表一 列表二 测试图片 Main content Profile name Interests heading Latest posts heading About interests Education Experience Honors Service Skills Contact Profiles";
+    for (const selector of ['meta[name="description"]', 'meta[property="og:description"]', 'meta[name="twitter:description"]']) {
+      await expect(page.locator(selector)).toHaveAttribute("content", description);
+    }
+    await bio.getByRole("link").click();
+    await expect(page).toHaveURL(new RegExp(`${escapeForRegExp(atConfiguredBase("/fixtures/project-cover.svg"))}$`));
+  });
+}
+
 for (const prefix of ["", "/en"]) {
   test(`${prefix || "zh"} main navigation and structural language switches reach real pages`, async ({ page }) => {
     const paths = ["/", "/about/", "/publications/", "/projects/", "/blog/"];
@@ -87,7 +119,7 @@ async function expectNoRejectedControls(page: import("@playwright/test").Page, l
   // Ordinary anchors need no button role, download attribute, or known CTA label.
   // Only the approved count/post links and About contact/profile links belong here.
   expect(await main.locator("a").evaluateAll((links) => links.filter((link) => !link.closest(
-    '[data-testid="content-counts"], [data-testid="homepage-post"] h3, [data-testid="about-content"] section[aria-labelledby="contact"], [data-testid="about-content"] section[aria-labelledby="profiles"]'
+    '[data-testid="profile-bio"], [data-testid="content-counts"], [data-testid="homepage-post"] h3, [data-testid="about-content"] section[aria-labelledby="contact"], [data-testid="about-content"] section[aria-labelledby="profiles"]'
   )).map((link) => ({ name: link.textContent, href: link.getAttribute("href") })))).toEqual([]);
 }
 

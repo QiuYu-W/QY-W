@@ -1,5 +1,15 @@
 import { expect, it } from "vitest";
-import { renderTrustedMarkdown } from "../../src/lib/markdown";
+import { markdownToPlainText, renderTrustedMarkdown } from "../../src/lib/markdown";
+
+it("derives readable metadata from rich text without markup, destinations or executable content", () => {
+  expect(markdownToPlainText("## Intro\n\nResearch on **reproducibility** and *clarity*. [Code](/projects/)\n\nSecond &amp; third.\n\n- One\n- Two\n\n![Diagram](/media/diagram.png)\n\n<span>Readable HTML</span><script>bad()</script><style>body{}</style>"))
+    .toBe("Intro Research on reproducibility and clarity. Code Second & third. One Two Diagram Readable HTML");
+});
+
+it("preserves plain biography punctuation and separates paragraphs and line breaks", () => {
+  expect(markdownToPlainText("中文简介：保留标点。\n\nA plain biography.  \nNew line."))
+    .toBe("中文简介：保留标点。 A plain biography. New line.");
+});
 
 it("renders Markdown without allowing raw HTML", () => {
   const { html } = renderTrustedMarkdown("<script>alert(1)</script>\n\n## Safe heading");

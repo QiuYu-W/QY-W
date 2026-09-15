@@ -2,6 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getProfile } from "../lib/content";
 import { alternateLocale, type Locale } from "../lib/i18n";
+import { markdownToPlainText, renderTrustedMarkdown } from "../lib/markdown";
 import { routeFor } from "../lib/urls";
 
 interface Props {
@@ -46,6 +47,9 @@ const copy = locale === "zh"
       noEntries: "To be provided."
     };
 const canonicalPath = routeFor(locale, "about");
+const biography = renderTrustedMarkdown(copy.bio, import.meta.env.BASE_URL, [
+  "main-content", "about-interests", "education", "experience", "honors", "service", "skills", "contact", "profiles"
+]);
 const localizedItems = (items: typeof profile.education) => items.map((item) => ({
   title: locale === "zh" ? item.titleZh : item.titleEn,
   detail: locale === "zh" ? item.detailZh : item.detailEn,
@@ -57,7 +61,7 @@ const localizedItems = (items: typeof profile.education) => items.map((item) => 
 <BaseLayout
   locale={locale}
   title={`${copy.about} | ${copy.name}`}
-  description={copy.bio}
+  description={markdownToPlainText(copy.bio)}
   canonicalPath={canonicalPath}
   alternatePath={routeFor(alternateLocale(locale), "about")}
 >
@@ -66,7 +70,7 @@ const localizedItems = (items: typeof profile.education) => items.map((item) => 
       <p class="role">{copy.role}</p>
       <h1>{copy.about}</h1>
       <p class="statement">{copy.statement}</p>
-      <p>{copy.bio}</p>
+      <div class="profile-bio" data-testid="profile-bio" lang={locale === "zh" ? "zh-CN" : "en"} set:html={biography.html} />
     </header>
 
     <section aria-labelledby="about-interests">
@@ -120,6 +124,19 @@ const localizedItems = (items: typeof profile.education) => items.map((item) => 
 </BaseLayout>
 
 <style>
+  .profile-bio {
+    overflow-wrap: anywhere;
+  }
+
+  .profile-bio :global(img) {
+    height: auto;
+    max-width: 100%;
+  }
+
+  .profile-bio :global(pre) {
+    overflow-x: auto;
+  }
+
   .about-page {
     max-width: 52rem;
     padding-top: clamp(3rem, 8vw, 6rem);
