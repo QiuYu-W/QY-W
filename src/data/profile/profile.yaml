@@ -1,24 +1,31 @@
-nameZh: 待填写
-nameEn: To be provided
-roleZh: 待填写
-roleEn: To be provided
-statementZh: 待填写
-statementEn: To be provided
+nameZh: 善悟
+nameEn: shanwu
+roleZh: 硕士
+roleEn: Master
+statementZh: 一个每天学习的小白
+statementEn: A newbie who studies every day.
 bioZh: 待填写
 bioEn: To be provided
 interestsZh:
-  - 待填写
+  - 人工智能、模式识别
+  - 特征选择、多视图
 interestsEn:
-  - To be provided
-portrait: /images/placeholder-portrait.svg
-portraitAltZh: 待填写的头像占位图
-portraitAltEn: To be provided portrait placeholder
-education: []
-experience: []
-honors: []
-service: []
-skillsZh: []
-skillsEn: []
+  - Artificial Intelligence, Pattern Recognition
+  - Feature Selection, Multi-view
+portrait: /media/file.png
+portraitAltZh: 头像
+portraitAltEn: profile picture
+education:
+  - titleZh: 本科
+    titleEn: Bachelor
+    detailZh: 湖南师范大学信息科学与工程学院软件工程专业
+    detailEn: Bachelor's Degree in Software Engineering, College of Information
+      Science and Engineering, Hunan Normal University.
+    start: "2020.9"
+    end: "2024.7"
+  - titleZh: 硕士
+    titleEn: Master
+    detailZh: 湖南师范大学信息科学与工程学院软件工程专业
+    detailEn: Master's Degree in Software Engineering, College of Information
+      Science and Engineering, Hunan Normal University.
 email: replace-me@example.com
-links: []
-authorAliases: []
