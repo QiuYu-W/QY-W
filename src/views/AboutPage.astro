@@ -109,7 +109,7 @@ const localizedItems = (items: typeof profile.education) => items.map((item) => 
 
     <section aria-labelledby="contact">
       <h2 id="contact">{copy.contact}</h2>
-      <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+      {profile.email ? <p><a href={`mailto:${profile.email}`}>{profile.email}</a></p> : <p>{copy.noEntries}</p>}
     </section>
 
     <section aria-labelledby="profiles">

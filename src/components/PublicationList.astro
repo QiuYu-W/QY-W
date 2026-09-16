@@ -15,13 +15,13 @@ const copy = locale === "zh"
       year: "年份", type: "成果类型", allYears: "全部年份", allTypes: "全部类型", noPublications: "暂时没有已发布的论文成果。",
       translatedTitle: "中文译名", doi: "DOI", venue: "刊物或会议", links: "相关链接",
       types: { journal: "期刊论文", conference: "会议论文", preprint: "预印本", book: "图书", chapter: "图书章节", thesis: "学位论文", other: "其他" },
-      statuses: { published: "已发表", accepted: "已接收", "in-press": "待刊", preprint: "预印本" }
+      statuses: { published: "已发表", accepted: "已接收", "in-press": "待刊", preprint: "预印本", pending: "待补充" }, pending: "待补充"
     }
   : {
       year: "Year", type: "Type", allYears: "All years", allTypes: "All types", noPublications: "No publications have been published yet.",
       translatedTitle: "Chinese translation", doi: "DOI", venue: "Venue", links: "Links",
       types: { journal: "Journal article", conference: "Conference paper", preprint: "Preprint", book: "Book", chapter: "Book chapter", thesis: "Thesis", other: "Other" },
-      statuses: { published: "Published", accepted: "Accepted", "in-press": "In press", preprint: "Preprint" }
+      statuses: { published: "Published", accepted: "Accepted", "in-press": "In press", preprint: "Preprint", pending: "Details forthcoming" }, pending: "Details forthcoming"
     };
 const years = [...new Set(publications.map(({ data }) => data.year))].sort((left, right) => right - left);
 const types = [...new Set(publications.map(({ data }) => data.type))].sort();
@@ -48,7 +48,7 @@ const groups = groupPublicationsByYear(publications.map((publication) => ({ year
 
   {publications.length === 0 ? <p>{copy.noPublications}</p> : groups.map(({ year, publications: entries }) => (
     <section aria-labelledby={`publication-year-${year}`} data-publication-year-group={year}>
-      <h2 id={`publication-year-${year}`}>{year}</h2>
+      <h2 id={`publication-year-${year}`}>{year || copy.pending}</h2>
       <ol>
         {entries.map(({ publication }) => {
           const record = publication.data;
@@ -56,8 +56,8 @@ const groups = groupPublicationsByYear(publications.map((publication) => ({ year
             <article>
               <h3>{record.title}</h3>
               {record.titleZh && <p class="translated-title"><span class="visually-hidden">{copy.translatedTitle}: </span>{record.titleZh}</p>}
-              <p class="authors">{record.authors.map((author, index) => <>{index > 0 && ", "}{isOwnerAuthor(author, ownerNames) ? <strong>{author}</strong> : author}</>)}</p>
-              <p class="metadata"><span>{copy.venue}: {record.venue}</span><span>{copy.types[record.type]}</span><span>{copy.statuses[record.status]}</span></p>
+              <p class="authors">{record.authors.length > 0 ? record.authors.map((author, index) => <>{index > 0 && ", "}{isOwnerAuthor(author, ownerNames) ? <strong>{author}</strong> : author}</>) : copy.pending}</p>
+              <p class="metadata">{record.venue && <span>{copy.venue}: {record.venue}</span>}<span>{copy.types[record.type]}</span><span>{copy.statuses[record.status]}</span></p>
               {(record.volume || record.issue || record.pages) && <p class="metadata-detail">{[record.volume, record.issue, record.pages].filter(Boolean).join(" · ")}</p>}
               <p class="links">
                 {record.doi && <a href={`https://doi.org/${record.doi}`}>{copy.doi}</a>}

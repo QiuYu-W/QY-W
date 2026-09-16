@@ -18,8 +18,9 @@ const body = locale === "zh" ? record.bodyZh : record.bodyEn;
 const role = locale === "zh" ? record.roleZh : record.roleEn;
 const coverAlt = locale === "zh" ? record.coverAltZh : record.coverAltEn;
 const status = locale === "zh"
-  ? { active: "进行中", completed: "已完成", paused: "已暂停" }[record.status]
-  : { active: "Active", completed: "Completed", paused: "Paused" }[record.status];
+  ? { active: "进行中", completed: "已完成", paused: "已暂停", pending: "待补充" }[record.status]
+  : { active: "Active", completed: "Completed", paused: "Paused", pending: "Details forthcoming" }[record.status];
+const period = record.start ? `${record.start}${record.end ? ` – ${record.end}` : ""}` : (locale === "zh" ? "时间待补充" : "Timeline forthcoming");
 const copy = locale === "zh"
   ? { status: "状态", period: "项目周期", role: "个人角色", links: "项目链接", publications: "关联论文" }
   : { status: "Status", period: "Project period", role: "Role", links: "Project links", publications: "Associated publications" };
@@ -34,7 +35,7 @@ const { html } = renderTrustedMarkdown(body, undefined, ["main-content"]);
   {record.cover && <img class="cover" src={assetUrl(record.cover)} alt={coverAlt || title} />}
   <dl class="metadata">
     <div><dt>{copy.status}</dt><dd>{status}</dd></div>
-    <div><dt>{copy.period}</dt><dd>{record.start}{record.end && ` – ${record.end}`}</dd></div>
+    <div><dt>{copy.period}</dt><dd>{period}</dd></div>
     <div><dt>{copy.role}</dt><dd>{role}</dd></div>
   </dl>
   <div class="prose" set:html={html} />

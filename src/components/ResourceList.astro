@@ -19,15 +19,17 @@ const types = [...new Set(resources.map(({ data }) => data.type))].sort();
     {types.map((type) => <option value={type}>{copy.types[type]}</option>)}
   </select>
   {resources.length === 0 ? <p>{copy.empty}</p> : <ul>
-    {resources.map(({ data }) => <li data-resource data-type={data.type}>
+    {resources.map(({ data }) => {
+      const resourceLinks = [...data.links, ...data.files.map((url) => ({ label: url.split("/").pop() || "Download", url }))];
+      return <li data-resource data-type={data.type}>
       <article>
         <p class="type">{copy.types[data.type]}</p>
         <h2>{data.title}</h2>
         <p>{data.summary}</p>
-        <p class="links">{data.links.map((link) => <a href={assetUrl(link.url)}>{link.label}</a>)}</p>
+        {resourceLinks.length > 0 && <p class="links">{resourceLinks.map((link) => <a href={assetUrl(link.url)}>{link.label}</a>)}</p>}
         {data.citation && <p class="citation"><strong>{copy.citation}:</strong> {data.citation}</p>}
       </article>
-    </li>)}
+    </li>})}
   </ul>}
 </section>
 

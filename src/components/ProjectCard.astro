@@ -14,14 +14,15 @@ const title = locale === "zh" ? record.titleZh : record.titleEn;
 const summary = locale === "zh" ? record.summaryZh : record.summaryEn;
 const coverAlt = locale === "zh" ? record.coverAltZh : record.coverAltEn;
 const status = locale === "zh"
-  ? { active: "进行中", completed: "已完成", paused: "已暂停" }[record.status]
-  : { active: "Active", completed: "Completed", paused: "Paused" }[record.status];
+  ? { active: "进行中", completed: "已完成", paused: "已暂停", pending: "待补充" }[record.status]
+  : { active: "Active", completed: "Completed", paused: "Paused", pending: "Details forthcoming" }[record.status];
+const period = record.start ? `${record.start}${record.end ? ` – ${record.end}` : ""}` : (locale === "zh" ? "时间待补充" : "Timeline forthcoming");
 ---
 
 <article class="project-card" data-project-card>
   {record.cover && <img src={assetUrl(record.cover)} alt={coverAlt || title} loading="lazy" />}
   <div>
-    <p class="metadata">{record.start}{record.end && ` – ${record.end}`} · {status}</p>
+    <p class="metadata">{period} · {status}</p>
     <h2><a href={routeFor(locale, "projects", record.slug)}>{title}</a></h2>
     <p>{summary}</p>
   </div>
