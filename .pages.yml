@@ -11,6 +11,12 @@ media:
     output: /imports
     rename: false
     extensions: [bib]
+  - name: resourceFiles
+    label: 资源文件
+    input: public/media/resources
+    output: /media/resources
+    rename: safe
+    extensions: [zip, csv, tsv, json, txt, md, pdf]
 
 components:
   link:
@@ -134,6 +140,43 @@ content:
       - { name: coverAltEn, label: Cover alt text, type: string }
       - { name: links, label: 项目链接, component: link, list: true }
       - { name: publicationKeys, label: 关联 citation keys, type: string, list: true }
+      - { name: draft, label: 草稿, type: boolean, default: false }
+
+  - name: resources
+    label: 资源 / Resources
+    type: collection
+    path: src/data/resources
+    format: yaml
+    filename: "{slug}.yaml"
+    view:
+      primary: title
+      fields: [language, type, title, draft]
+      sort: [title]
+      search: [title, summary, citation]
+    fields:
+      - name: language
+        label: 资源语言
+        type: select
+        required: true
+        options:
+          values:
+            - { name: zh, label: 中文 }
+            - { name: en, label: English }
+      - name: slug
+        label: URL 标识
+        type: string
+        required: true
+        pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      - name: type
+        label: 资源类型
+        type: select
+        required: true
+        options:
+          values: [dataset, software, code, other]
+      - { name: title, label: 标题, type: string, required: true }
+      - { name: summary, label: 简介, type: text, required: true }
+      - { name: links, label: 资源链接, component: link, list: true, required: true, description: 可填 HTTPS 外部链接，或从“资源文件”媒体区上传后使用 /media/resources/ 路径 }
+      - { name: citation, label: 推荐引用（可选）, type: text }
       - { name: draft, label: 草稿, type: boolean, default: false }
 
   - name: blog

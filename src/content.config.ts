@@ -1,6 +1,6 @@
 import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
-import { blogSchema, profileSchema, projectSchema, publicationSchema } from "./lib/schemas";
+import { blogSchema, profileSchema, projectSchema, publicationSchema, resourceSchema } from "./lib/schemas";
 
 /** Keep collection identities tied to their source files; public URLs use schema slugs. */
 export function sourceFileEntryId({ entry }: { entry: string }): string {
@@ -32,5 +32,13 @@ const blog = defineCollection({
   }),
   schema: blogSchema
 });
+const resources = defineCollection({
+  loader: glob({
+    pattern: "**/*.{yaml,yml}",
+    base: "./src/data/resources",
+    generateId: sourceFileEntryId
+  }),
+  schema: resourceSchema
+});
 
-export const collections = { profile, publications, projects, blog };
+export const collections = { profile, publications, projects, blog, resources };

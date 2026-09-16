@@ -17,6 +17,7 @@ const labels = locale === "zh"
       publications: "论文成果",
       projects: "科研项目",
       blog: "科研博客",
+      resources: "资源",
       navigation: "主导航"
     }
   : {
@@ -25,10 +26,11 @@ const labels = locale === "zh"
       publications: "Publications",
       projects: "Projects",
       blog: "Blog",
+      resources: "Resources",
       navigation: "Main navigation"
     };
 
-const navigation = ["home", "about", "publications", "projects", "blog"] as const;
+const navigation = ["home", "about", "publications", "projects", "blog", "resources"] as const;
 ---
 
 <header class="site-header">

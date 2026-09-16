@@ -1,0 +1,12 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { getProfile } from "../../../lib/content";
+import { routeFor } from "../../../lib/urls";
+import ResourcesPage from "../../../views/ResourcesPage.astro";
+
+const profile = await getProfile();
+---
+
+<BaseLayout locale="en" title={`Resources | ${profile.nameEn}`} description="Public datasets, software, code, and other research resources." canonicalPath={routeFor("en", "resources")} alternatePath={routeFor("zh", "resources")}>
+  <ResourcesPage locale="en" />
+</BaseLayout>

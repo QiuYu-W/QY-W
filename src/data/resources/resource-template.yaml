@@ -1,0 +1,9 @@
+language: zh
+slug: resource-template
+type: other
+title: 待填写资源
+summary: 这是仅供 Pages CMS 编辑参考的草稿模板，不会公开显示。
+links:
+  - label: 待填写链接
+    url: https://example.com
+draft: true

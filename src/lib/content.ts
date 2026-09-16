@@ -6,11 +6,13 @@ import type { Profile } from "./schemas";
 export type Publication = CollectionEntry<"publications">;
 export type Project = CollectionEntry<"projects">;
 export type BlogPost = CollectionEntry<"blog">;
+export type Resource = CollectionEntry<"resources">;
 
 export type ContentIdentityInput = {
   publications: Array<{ id: string; citationKey: string; doi?: string }>;
   projects: Array<{ id: string; slug: string }>;
   posts: Array<{ id: string; language: Locale; slug: string }>;
+  resources?: Array<{ id: string; slug: string }>;
 };
 
 function assertNoDuplicate(values: Array<{ id: string; value?: string }>, label: string): void {
@@ -47,6 +49,7 @@ export function assertUniqueContentIdentifiers(input: ContentIdentityInput): voi
     input.posts.map(({ id, language, slug }) => ({ id, value: `${language}:${slug.trim().toLowerCase()}` })),
     "blog language-and-slug"
   );
+  assertNoDuplicate((input.resources ?? []).map(({ id, slug }) => ({ id, value: slug.trim().toLowerCase() })), "resource slug");
 }
 
 export function countPublished(items: Array<{ draft?: boolean }>): number {
@@ -69,23 +72,25 @@ export function sortProjectsNewestFirst<T extends { start: string; slug: string 
   );
 }
 
-function identityInput(publications: Publication[], projects: Project[], posts: BlogPost[]): ContentIdentityInput {
+function identityInput(publications: Publication[], projects: Project[], posts: BlogPost[], resources: Resource[]): ContentIdentityInput {
   return {
     publications: publications.map(({ id, data }) => ({ id, citationKey: data.citationKey, doi: data.doi })),
     projects: projects.map(({ id, data }) => ({ id, slug: data.slug })),
-    posts: posts.map(({ id, data }) => ({ id, language: data.language, slug: data.slug }))
+    posts: posts.map(({ id, data }) => ({ id, language: data.language, slug: data.slug })),
+    resources: resources.map(({ id, data }) => ({ id, slug: data.slug }))
   };
 }
 
-async function getValidatedCollections(): Promise<[Publication[], Project[], BlogPost[]]> {
+async function getValidatedCollections(): Promise<[Publication[], Project[], BlogPost[], Resource[]]> {
   const { getCollection } = await import("astro:content");
-  const [publications, projects, posts] = await Promise.all([
+  const [publications, projects, posts, resources] = await Promise.all([
     getCollection("publications"),
     getCollection("projects"),
-    getCollection("blog")
+    getCollection("blog"),
+    getCollection("resources")
   ]);
-  assertUniqueContentIdentifiers(identityInput(publications, projects, posts));
-  return [publications, projects, posts];
+  assertUniqueContentIdentifiers(identityInput(publications, projects, posts, resources));
+  return [publications, projects, posts, resources];
 }
 
 export async function getProfile(): Promise<Profile> {
@@ -122,6 +127,13 @@ export async function getPublishedPosts(locale?: Locale): Promise<BlogPost[]> {
     publishedAt: entry.data.publishedAt,
     slug: entry.data.slug
   }))).map(({ publishedAt: _publishedAt, slug: _slug, ...entry }) => entry);
+}
+
+export async function getPublishedResources(locale: Locale): Promise<Resource[]> {
+  const [, , , resources] = await getValidatedCollections();
+  return [...resources]
+    .filter(({ data }) => data.draft !== true && data.language === locale)
+    .sort((left, right) => left.data.title.localeCompare(right.data.title));
 }
 
 export async function getHomepageCounts(): Promise<{ publications: number; projects: number; posts: number }> {
