@@ -143,10 +143,10 @@ export async function getPublishedPosts(locale?: Locale): Promise<BlogPost[]> {
   }))).map(({ publishedAt: _publishedAt, slug, ...entry }) => ({ ...entry, data: { ...entry.data, slug } }));
 }
 
-export async function getPublishedResources(locale: Locale): Promise<Resource[]> {
+export async function getPublishedResources(): Promise<Resource[]> {
   const [, , , resources] = await getValidatedCollections();
   return [...resources]
-    .filter(({ data }) => data.draft !== true && data.language === locale)
+    .filter(({ data }) => data.draft !== true)
     .sort((left, right) => left.data.title.localeCompare(right.data.title));
 }
 

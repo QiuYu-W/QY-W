@@ -53,24 +53,19 @@ for (const prefix of ["", "/en"]) {
     }
   });
 
-  test(`${prefix || "zh"} homepage totals match published records across the localized lists`, async ({ page }) => {
+  test(`${prefix || "zh"} homepage totals match the shared published lists`, async ({ page }) => {
     const selectors = ["[data-publication]", "[data-project-card]", "[data-blog-post]"];
     for (const [index, selector] of selectors.entries()) {
       await page.goto(atConfiguredBase(`${prefix}/`));
       const link = page.getByTestId("content-counts").getByRole("link").nth(index);
       const count = Number((await link.getAttribute("aria-label"))!.split(" ")[0]);
       await link.click();
-      if (index === 2) {
-        // The shared homepage total counts both languages; each blog index shows its locale.
-        const localizedCount = await page.locator(selector).count();
-        await page.goto(atConfiguredBase(`${prefix ? "" : "/en"}/blog/`));
-        expect(localizedCount + await page.locator(selector).count()).toBe(count);
-      } else await expect(page.locator(selector)).toHaveCount(count);
+      await expect(page.locator(selector)).toHaveCount(count);
     }
   });
 }
 
-test("resource pages stay localized and exclude draft templates", async ({ page }) => {
+test("resource pages share published records and exclude draft templates", async ({ page }) => {
   await page.goto(atConfiguredBase("/resources/"));
   await expect(page.getByTestId("resources-page")).toContainText("公开发布的数据集、软件、代码与其他研究资源。");
   await expect(page.getByTestId("resource-list")).not.toContainText("待填写资源");
@@ -156,14 +151,14 @@ for (const { route, locale, labels, hrefs } of localizedPages) {
     }
   });
 
-  test(`${locale} homepage limits posts to two and keeps any rendered post in its locale`, async ({ page }) => {
+  test(`${locale} homepage limits posts to two and links each post to its source language`, async ({ page }) => {
     await page.goto(atConfiguredBase(route));
     const posts = page.getByTestId("homepage-post");
     const renderedPostCount = await posts.count();
 
     expect(renderedPostCount).toBeLessThanOrEqual(2);
     for (let index = 0; index < renderedPostCount; index += 1) {
-      await expect(posts.nth(index).getByRole("link")).toHaveAttribute("href", new RegExp(`^${escapeForRegExp(atConfiguredBase(locale === "zh" ? "/blog/" : "/en/blog/"))}`));
+      await expect(posts.nth(index).getByRole("link")).toHaveAttribute("href", new RegExp(`^${escapeForRegExp(basePath)}(?:/en)?/blog/`));
     }
   });
 
@@ -201,7 +196,7 @@ for (const [route, expectedStructure] of [
   });
 }
 
-test("homepages match localized empty states to their rendered same-locale posts", async ({ page }) => {
+test("homepages match localized empty states to their rendered shared posts", async ({ page }) => {
   for (const { route, emptyPostsMessage } of localizedPages) {
     await page.goto(atConfiguredBase(route));
     const renderedPostCount = await page.getByTestId("homepage-post").count();
@@ -340,12 +335,11 @@ for (const locale of ["zh", "en"] as const) {
     try {
       const staticPage = await context.newPage();
       await staticPage.goto(atConfiguredBase(`${prefix}/blog/`));
-      for (const slug of ["fixture-alpha", "fixture-beta", "fixture-related"]) {
-        await expect(staticPage.getByRole("link", { name: `${locale} ${slug}`, exact: true })).toBeVisible();
+      for (const language of ["zh", "en"]) for (const slug of ["fixture-alpha", "fixture-beta", "fixture-related"]) {
+        await expect(staticPage.getByRole("link", { name: `${language} ${slug}`, exact: true })).toBeVisible();
       }
       const docs = await (await page.request.get(atConfiguredBase("/search-index.json"))).json();
-      const expectedPosts = docs.filter((doc: { language: string }) => doc.language === locale);
-      await expect(staticPage.locator("[data-blog-post]")).toHaveCount(expectedPosts.length);
+      await expect(staticPage.locator("[data-blog-post]")).toHaveCount(docs.length);
       for (const row of await staticPage.locator("[data-blog-post]").all()) {
         await expect(row).toBeVisible();
         await expect(row).not.toContainText("fixture-secret");
@@ -353,19 +347,24 @@ for (const locale of ["zh", "en"] as const) {
     } finally { await context.close(); }
     await page.route("**/search-index.json", (route) => route.abort());
     await page.goto(atConfiguredBase(`${prefix}/blog/`));
-    await expect(page.getByRole("link", { name: `${locale} fixture-alpha`, exact: true })).toBeVisible();
-    await expect(page.getByRole("link", { name: `${locale} fixture-beta`, exact: true })).toBeVisible();
+    for (const language of ["zh", "en"]) {
+      await expect(page.getByRole("link", { name: `${language} fixture-alpha`, exact: true })).toBeVisible();
+      await expect(page.getByRole("link", { name: `${language} fixture-beta`, exact: true })).toBeVisible();
+    }
     await expect(page.getByTestId("blog-search")).toBeDisabled();
   });
 
-  test(`search ${locale} combines body text category and tag without leaking the other language`, async ({ page }) => {
+  test(`search ${locale} combines body text category and tag across both languages`, async ({ page }) => {
     await page.goto(atConfiguredBase(`${prefix}/blog/`));
     const search = page.getByTestId("blog-search");
     await expect(search).toBeEnabled();
     await search.fill(locale === "zh" ? "独有术语" : "quantumbanana");
     const visible = page.locator("[data-blog-post]:visible");
-    await expect(visible).toHaveCount(1);
-    await expect(visible).toContainText(`${locale} fixture-alpha`);
+    await expect(visible).toHaveCount(2);
+    expect(await visible.allTextContents()).toEqual(expect.arrayContaining([
+      expect.stringContaining("zh fixture-alpha"),
+      expect.stringContaining("en fixture-alpha")
+    ]));
     await search.fill("");
     await page.getByTestId("blog-category").selectOption("Methods");
     await page.getByTestId("blog-tag").selectOption("alpha");
@@ -378,18 +377,19 @@ for (const locale of ["zh", "en"] as const) {
     await page.getByTestId("blog-category").selectOption("");
     await page.getByTestId("blog-tag").selectOption("");
     const links = await visible.locator("h2 a").evaluateAll((els) => els.map((el) => el.getAttribute("href")));
-    expect(links.every((href) => href?.startsWith(atConfiguredBase(`${prefix}/blog/`)))).toBe(true);
-    expect(links.indexOf(atConfiguredBase(`${prefix}/blog/fixture-alpha/`))).toBeLessThan(links.indexOf(atConfiguredBase(`${prefix}/blog/fixture-beta/`)));
+    expect(links).toContain(atConfiguredBase("/blog/fixture-alpha/"));
+    expect(links).toContain(atConfiguredBase("/en/blog/fixture-alpha/"));
   });
 
-  test(`RSS ${locale} contains only published locale URLs under SITE_URL`, async ({ request }) => {
+  test(`RSS ${locale} contains all published original-language URLs under SITE_URL`, async ({ request }) => {
     const response = await request.get(atConfiguredBase(`${prefix}/rss.xml`));
     expect(response.status()).toBe(200);
     const xml = await response.text();
     const site = new URL(process.env.SITE_URL || "http://localhost:4321");
-    expect(xml).toContain(`${site.origin}${atConfiguredBase(`${prefix}/blog/fixture-alpha/`)}`);
-    expect(xml).toContain(`${locale} fixture-alpha`);
-    expect(xml).not.toContain(`${locale === "zh" ? "en" : "zh"} fixture-alpha`);
+    expect(xml).toContain(`${site.origin}${atConfiguredBase("/blog/fixture-alpha/")}`);
+    expect(xml).toContain(`${site.origin}${atConfiguredBase("/en/blog/fixture-alpha/")}`);
+    expect(xml).toContain("zh fixture-alpha");
+    expect(xml).toContain("en fixture-alpha");
     expect(xml).not.toContain("fixture-secret");
   });
 }

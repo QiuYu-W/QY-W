@@ -6,7 +6,7 @@ import type { Locale } from "../lib/i18n";
 interface Props { locale: Locale; }
 
 const { locale } = Astro.props;
-const resources = await getPublishedResources(locale);
+const resources = await getPublishedResources();
 const copy = locale === "zh"
   ? { heading: "资源", description: "公开发布的数据集、软件、代码与其他研究资源。" }
   : { heading: "Resources", description: "Public datasets, software, code, and other research resources." };

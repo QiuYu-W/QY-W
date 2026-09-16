@@ -15,7 +15,7 @@ const { locale } = Astro.props;
 const [profile, counts, posts] = await Promise.all([
   getProfile(),
   getHomepageCounts(),
-  getPublishedPosts(locale)
+  getPublishedPosts()
 ]);
 const latestPosts = selectHomepagePosts(posts);
 const copy = locale === "zh"
@@ -87,7 +87,7 @@ const biography = renderTrustedMarkdown(copy.bio, import.meta.env.BASE_URL, [
         {latestPosts.posts.map((post) => (
           <li>
             <article data-testid="homepage-post">
-              <h3><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h3>
+              <h3><a href={routeFor(post.data.language, "blog", post.data.slug)}>{post.data.title}</a></h3>
               <p>{post.data.summary}</p>
               <time datetime={post.data.publishedAt.toISOString()}>{dateFormatter.format(post.data.publishedAt)}</time>
             </article>
