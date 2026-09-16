@@ -212,7 +212,7 @@ content:
       - { name: tags, label: 标签, type: string, list: true }
       - { name: cover, label: 封面, type: image, options: { media: images } }
       - { name: coverAlt, label: 封面替代文字, type: string }
-      - { name: draft, label: 草稿, type: boolean, default: true }
+      - { name: draft, label: 草稿, type: boolean, default: false }
       - { name: body, label: 正文, type: rich-text, options: { format: markdown, media: images } }
 
 settings:
