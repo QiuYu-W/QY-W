@@ -34,23 +34,24 @@ const doi = z.preprocess(
 );
 
 export const profileSchema = z.object({
-  nameZh: z.string().min(1), nameEn: z.string().min(1),
-  roleZh: z.string().min(1), roleEn: z.string().min(1),
-  statementZh: z.string().min(1), statementEn: z.string().min(1),
-  bioZh: z.string().min(1), bioEn: z.string().min(1),
-  interestsZh: z.array(z.string().min(1)), interestsEn: z.array(z.string().min(1)),
-  portrait: z.string().min(1), portraitAltZh: z.string().min(1), portraitAltEn: z.string().min(1),
-  education: z.array(localizedItem), experience: z.array(localizedItem).default([]),
+  nameZh: z.string().default("未命名学者"), nameEn: z.string().default("Unnamed scholar"),
+  roleZh: z.string().default("研究者"), roleEn: z.string().default("Researcher"),
+  statementZh: z.string().default("简介待补充"), statementEn: z.string().default("Details forthcoming"),
+  bioZh: z.string().default("简介待补充"), bioEn: z.string().default("Details forthcoming"),
+  interestsZh: z.array(z.string().min(1)).default([]), interestsEn: z.array(z.string().min(1)).default([]),
+  portrait: z.string().default(""), portraitAltZh: z.string().default(""), portraitAltEn: z.string().default(""),
+  education: z.array(localizedItem).default([]), experience: z.array(localizedItem).default([]),
   honors: z.array(localizedItem).default([]), service: z.array(localizedItem).default([]),
   skillsZh: z.array(z.string().min(1)).default([]), skillsEn: z.array(z.string().min(1)).default([]),
-  email: z.string().email(), links: z.array(link).default([]), authorAliases: z.array(z.string().min(1)).default([])
+  email: z.preprocess((value) => value === "" ? undefined : value, z.string().email().optional()).default(""), links: z.array(link).default([]), authorAliases: z.array(z.string().min(1)).default([])
 });
+const resourceFile = z.string().regex(/^\/media\/resources\/[A-Za-z0-9._/-]+$/);
 
 export const publicationSchema = z.object({
-  citationKey: z.string().min(1), doi, title: z.string().min(1), titleZh: z.string().optional(),
-  authors: z.array(z.string().min(1)).min(1), year: z.number().int().min(1000).max(9999), venue: z.string().min(1),
-  type: z.enum(["journal", "conference", "preprint", "book", "chapter", "thesis", "other"]),
-  status: z.enum(["published", "accepted", "in-press", "preprint"]),
+  citationKey: z.string().default(""), doi, title: z.string().default("未命名论文"), titleZh: z.string().optional(),
+  authors: z.array(z.string().min(1)).default([]), year: z.number().int().min(1000).max(9999).default(0), venue: z.string().default(""),
+  type: z.enum(["journal", "conference", "preprint", "book", "chapter", "thesis", "other"]).default("other"),
+  status: z.enum(["published", "accepted", "in-press", "preprint", "pending"]).default("pending"),
   volume: z.string().optional(), issue: z.string().optional(), pages: z.string().optional(),
   abstractZh: z.string().optional(), abstractEn: z.string().optional(), links: z.array(publicationLink).default([]),
   draft: z.boolean().default(false)
@@ -62,30 +63,31 @@ export const importedPublicationSchema = publicationSchema.pick({
 }).partial({ status: true });
 
 export const projectSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  titleZh: z.string().min(1), titleEn: z.string().min(1), summaryZh: z.string().min(1), summaryEn: z.string().min(1),
-  bodyZh: z.string().min(1), bodyEn: z.string().min(1), start: isoDate, end: optionalIsoDate,
-  status: z.enum(["active", "completed", "paused"]), roleZh: z.string().min(1), roleEn: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).default(""),
+  titleZh: z.string().default("未命名项目"), titleEn: z.string().default("Details forthcoming"), summaryZh: z.string().default("简介待补充"), summaryEn: z.string().default("Details forthcoming"),
+  bodyZh: z.string().default(""), bodyEn: z.string().default(""), start: z.union([isoDate, z.literal("")]).default(""), end: optionalIsoDate,
+  status: z.enum(["active", "completed", "paused", "pending"]).default("pending"), roleZh: z.string().default("待补充"), roleEn: z.string().default("Details forthcoming"),
   cover: z.string().optional(), coverAltZh: z.string().default(""), coverAltEn: z.string().default(""),
   links: z.array(projectLink).default([]), publicationKeys: z.array(z.string()).default([]),
   draft: z.boolean().default(false)
 });
 
 export const resourceSchema = z.object({
-  language: z.enum(["zh", "en"]),
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  type: z.enum(["dataset", "software", "code", "other"]),
-  title: z.string().min(1),
-  summary: z.string().min(1),
-  links: z.array(resourceLink).min(1),
+  language: z.enum(["zh", "en"]).default("zh"),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).default(""),
+  type: z.enum(["dataset", "software", "code", "other"]).default("other"),
+  title: z.string().default("未命名资源"),
+  summary: z.string().default("简介待补充"),
+  links: z.array(resourceLink).default([]),
+  files: z.array(resourceFile).default([]),
   citation: z.string().min(1).optional(),
   draft: z.boolean().default(false)
 });
 
 export const blogSchema = z.object({
-  language: z.enum(["zh", "en"]), title: z.string().min(1), summary: z.string().min(1),
-  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), publishedAt: z.coerce.date(), updatedAt: optionalDate,
-  category: z.string().min(1), tags: z.array(z.string().min(1)).default([]),
+  language: z.enum(["zh", "en"]).default("zh"), title: z.string().default("未命名文章"), summary: z.string().default("简介待补充"),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).default(""), publishedAt: z.coerce.date().default(() => new Date()), updatedAt: optionalDate,
+  category: z.string().default("未分类"), tags: z.array(z.string().min(1)).default([]),
   cover: z.string().optional(), coverAlt: z.string().default(""), draft: z.boolean().default(true)
 });
 

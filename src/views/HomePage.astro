@@ -73,9 +73,9 @@ const biography = renderTrustedMarkdown(copy.bio, import.meta.env.BASE_URL, [
         </ul>
       </section>
     </div>
-    <figure>
-      <img src={assetUrl(profile.portrait)} alt={copy.portraitAlt} width="480" height="480" />
-    </figure>
+    {profile.portrait && <figure>
+      <img src={assetUrl(profile.portrait)} alt={copy.portraitAlt || copy.name} width="480" height="480" />
+    </figure>}
   </section>
 
   <CountLinks {...counts} locale={locale} />
