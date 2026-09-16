@@ -10,6 +10,13 @@ const publicationLink = link.extend({
 const projectLink = link.extend({
   url: link.shape.url.refine((value) => /^https?:\/\//i.test(value), "Project resource URLs must use explicit HTTP or HTTPS")
 });
+const resourceLink = z.object({
+  label: z.string().min(1),
+  url: z.string().refine(
+    (value) => /^https:\/\//i.test(value) || (/^\/media\/[A-Za-z0-9._/-]+$/.test(value) && !value.includes("..")),
+    "Resource URLs must use HTTPS, or a safe /media/ path"
+  )
+});
 const localizedItem = z.object({
   titleZh: z.string().min(1),
   titleEn: z.string().min(1),
@@ -64,6 +71,17 @@ export const projectSchema = z.object({
   draft: z.boolean().default(false)
 });
 
+export const resourceSchema = z.object({
+  language: z.enum(["zh", "en"]),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  type: z.enum(["dataset", "software", "code", "other"]),
+  title: z.string().min(1),
+  summary: z.string().min(1),
+  links: z.array(resourceLink).min(1),
+  citation: z.string().min(1).optional(),
+  draft: z.boolean().default(false)
+});
+
 export const blogSchema = z.object({
   language: z.enum(["zh", "en"]), title: z.string().min(1), summary: z.string().min(1),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/), publishedAt: z.coerce.date(), updatedAt: optionalDate,
@@ -74,4 +92,5 @@ export const blogSchema = z.object({
 export type Profile = z.infer<typeof profileSchema>;
 export type PublicationRecord = z.infer<typeof publicationSchema>;
 export type ProjectRecord = z.infer<typeof projectSchema>;
+export type ResourceRecord = z.infer<typeof resourceSchema>;
 export type BlogPostRecord = z.infer<typeof blogSchema>;

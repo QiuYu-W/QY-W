@@ -1,0 +1,25 @@
+---
+import ResourceList from "../components/ResourceList.astro";
+import { getPublishedResources } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+
+interface Props { locale: Locale; }
+
+const { locale } = Astro.props;
+const resources = await getPublishedResources(locale);
+const copy = locale === "zh"
+  ? { heading: "资源", description: "公开发布的数据集、软件、代码与其他研究资源。" }
+  : { heading: "Resources", description: "Public datasets, software, code, and other research resources." };
+---
+
+<article class="resources-page" data-testid="resources-page">
+  <header><h1>{copy.heading}</h1><p>{copy.description}</p></header>
+  <ResourceList locale={locale} resources={resources} />
+</article>
+
+<style>
+  .resources-page { max-width: 60rem; padding-top: clamp(3rem, 8vw, 6rem); }
+  header { margin-bottom: 2.5rem; }
+  h1 { font-size: clamp(2.25rem, 5vw, 4rem); margin: 0; }
+  header p { color: var(--color-muted); font-size: 1.1rem; margin: 1rem 0 0; }
+</style>

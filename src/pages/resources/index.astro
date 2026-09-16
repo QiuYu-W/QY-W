@@ -1,0 +1,12 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getProfile } from "../../lib/content";
+import { routeFor } from "../../lib/urls";
+import ResourcesPage from "../../views/ResourcesPage.astro";
+
+const profile = await getProfile();
+---
+
+<BaseLayout locale="zh" title={`资源 | ${profile.nameZh}`} description="公开发布的数据集、软件、代码与其他研究资源。" canonicalPath={routeFor("zh", "resources")} alternatePath={routeFor("en", "resources")}>
+  <ResourcesPage locale="zh" />
+</BaseLayout>

@@ -40,7 +40,7 @@ for (const route of routes) {
 
 for (const prefix of ["", "/en"]) {
   test(`${prefix || "zh"} main navigation and structural language switches reach real pages`, async ({ page }) => {
-    const paths = ["/", "/about/", "/publications/", "/projects/", "/blog/"];
+    const paths = ["/", "/about/", "/publications/", "/projects/", "/blog/", "/resources/"];
     for (const path of paths) {
       await page.goto(atConfiguredBase(`${prefix}/`));
       await page.getByRole("navigation", { name: prefix ? "Main navigation" : "主导航", exact: true }).locator(`a[href="${atConfiguredBase(`${prefix}${path}`)}"]`).click();
@@ -69,6 +69,16 @@ for (const prefix of ["", "/en"]) {
     }
   });
 }
+
+test("resource pages use localized published-only empty states", async ({ page }) => {
+  await page.goto(atConfiguredBase("/resources/"));
+  await expect(page.getByTestId("resources-page")).toContainText("公开发布的数据集、软件、代码与其他研究资源。");
+  await expect(page.getByTestId("resource-list")).toContainText("暂时没有已发布的资源。");
+
+  await page.goto(atConfiguredBase("/en/resources/"));
+  await expect(page.getByTestId("resources-page")).toContainText("Public datasets, software, code, and other research resources.");
+  await expect(page.getByTestId("resource-list")).toContainText("No resources have been published yet.");
+});
 
 test("404 explains the missing page in both languages and returns to either homepage", async ({ page }) => {
   for (const [name, destination] of [["返回中文首页", "/"], ["Go to English home", "/en/"]]) {

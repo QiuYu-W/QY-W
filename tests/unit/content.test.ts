@@ -293,6 +293,18 @@ describe("content identifier validation", () => {
       ]
     })).not.toThrow();
   });
+
+  it("rejects duplicate resource slugs", () => {
+    expect(() => assertUniqueContentIdentifiers({
+      publications: [],
+      projects: [],
+      posts: [],
+      resources: [
+        { id: "resources/first.yaml", slug: "shared-resource" },
+        { id: "resources/second.yaml", slug: "SHARED-RESOURCE" }
+      ]
+    })).toThrow(/Duplicate resource slug(?=.*first\.yaml)(?=.*second\.yaml)/i);
+  });
 });
 
 describe("Astro glob loader integration", () => {

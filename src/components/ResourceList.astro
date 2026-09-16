@@ -1,0 +1,53 @@
+---
+import type { Resource } from "../lib/content";
+import type { Locale } from "../lib/i18n";
+import { assetUrl } from "../lib/urls";
+
+interface Props { locale: Locale; resources: Resource[]; }
+
+const { locale, resources } = Astro.props;
+const copy = locale === "zh"
+  ? { all: "全部类型", filter: "资源类型", empty: "暂时没有已发布的资源。", citation: "推荐引用", types: { dataset: "数据集", software: "软件", code: "代码", other: "其他" } }
+  : { all: "All types", filter: "Resource type", empty: "No resources have been published yet.", citation: "Suggested citation", types: { dataset: "Dataset", software: "Software", code: "Code", other: "Other" } };
+const types = [...new Set(resources.map(({ data }) => data.type))].sort();
+---
+
+<section class="resource-list" data-testid="resource-list">
+  <label for="resource-type">{copy.filter}</label>
+  <select id="resource-type" data-resource-type>
+    <option value="">{copy.all}</option>
+    {types.map((type) => <option value={type}>{copy.types[type]}</option>)}
+  </select>
+  {resources.length === 0 ? <p>{copy.empty}</p> : <ul>
+    {resources.map(({ data }) => <li data-resource data-type={data.type}>
+      <article>
+        <p class="type">{copy.types[data.type]}</p>
+        <h2>{data.title}</h2>
+        <p>{data.summary}</p>
+        <p class="links">{data.links.map((link) => <a href={assetUrl(link.url)}>{link.label}</a>)}</p>
+        {data.citation && <p class="citation"><strong>{copy.citation}:</strong> {data.citation}</p>}
+      </article>
+    </li>)}
+  </ul>}
+</section>
+
+<script>
+  const filter = document.querySelector<HTMLSelectElement>("[data-resource-type]");
+  const resources = [...document.querySelectorAll<HTMLElement>("[data-resource]")];
+  filter?.addEventListener("change", () => {
+    for (const resource of resources) resource.hidden = Boolean(filter.value && resource.dataset.type !== filter.value);
+  });
+</script>
+
+<style>
+  .resource-list > label { display: block; font-weight: 650; margin-bottom: 0.25rem; }
+  select { background: var(--color-paper); border: 1px solid color-mix(in srgb, var(--color-ink) 32%, transparent); border-radius: 0.2rem; color: inherit; font: inherit; padding: 0.35rem 0.5rem; }
+  ul { list-style: none; margin: 2rem 0 0; padding: 0; }
+  li + li { border-top: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent); margin-top: 1.5rem; padding-top: 1.5rem; }
+  h2, p { margin: 0; }
+  h2 { font-size: 1.35rem; margin-top: 0.25rem; }
+  .type, .citation { color: var(--color-muted); margin-top: 0.5rem; }
+  .type { font-size: 0.9rem; font-weight: 650; text-transform: uppercase; }
+  .links { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; margin-top: 0.75rem; }
+  .links a + a::before { color: var(--color-muted); content: "·"; margin-right: 0.75rem; }
+</style>

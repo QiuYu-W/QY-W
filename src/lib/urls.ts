@@ -1,13 +1,14 @@
 import { localizedPath, type Locale } from "./i18n";
 
-type RouteKind = "home" | "about" | "publications" | "projects" | "blog";
+type RouteKind = "home" | "about" | "publications" | "projects" | "blog" | "resources";
 
 const ROUTES: Record<RouteKind, string> = {
   home: "/",
   about: "/about/",
   publications: "/publications/",
   projects: "/projects/",
-  blog: "/blog/"
+  blog: "/blog/",
+  resources: "/resources/"
 };
 
 const DETAIL_ROUTES = new Set<RouteKind>(["projects", "blog"]);
