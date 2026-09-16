@@ -70,14 +70,14 @@ for (const prefix of ["", "/en"]) {
   });
 }
 
-test("resource pages use localized published-only empty states", async ({ page }) => {
+test("resource pages stay localized and exclude draft templates", async ({ page }) => {
   await page.goto(atConfiguredBase("/resources/"));
   await expect(page.getByTestId("resources-page")).toContainText("公开发布的数据集、软件、代码与其他研究资源。");
-  await expect(page.getByTestId("resource-list")).toContainText("暂时没有已发布的资源。");
+  await expect(page.getByTestId("resource-list")).not.toContainText("待填写资源");
 
   await page.goto(atConfiguredBase("/en/resources/"));
   await expect(page.getByTestId("resources-page")).toContainText("Public datasets, software, code, and other research resources.");
-  await expect(page.getByTestId("resource-list")).toContainText("No resources have been published yet.");
+  await expect(page.getByTestId("resource-list")).not.toContainText("待填写资源");
 });
 
 test("404 explains the missing page in both languages and returns to either homepage", async ({ page }) => {
