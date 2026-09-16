@@ -33,10 +33,10 @@ export const profileSchema = z.object({
   bioZh: z.string().min(1), bioEn: z.string().min(1),
   interestsZh: z.array(z.string().min(1)), interestsEn: z.array(z.string().min(1)),
   portrait: z.string().min(1), portraitAltZh: z.string().min(1), portraitAltEn: z.string().min(1),
-  education: z.array(localizedItem), experience: z.array(localizedItem),
-  honors: z.array(localizedItem), service: z.array(localizedItem),
-  skillsZh: z.array(z.string().min(1)), skillsEn: z.array(z.string().min(1)),
-  email: z.string().email(), links: z.array(link), authorAliases: z.array(z.string().min(1)).default([])
+  education: z.array(localizedItem), experience: z.array(localizedItem).default([]),
+  honors: z.array(localizedItem).default([]), service: z.array(localizedItem).default([]),
+  skillsZh: z.array(z.string().min(1)).default([]), skillsEn: z.array(z.string().min(1)).default([]),
+  email: z.string().email(), links: z.array(link).default([]), authorAliases: z.array(z.string().min(1)).default([])
 });
 
 export const publicationSchema = z.object({
