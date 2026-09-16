@@ -88,7 +88,7 @@ export const blogSchema = z.object({
   language: z.enum(["zh", "en"]).default("zh"), title: z.string().default("未命名文章"), summary: z.string().default("简介待补充"),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).default(""), publishedAt: z.coerce.date().default(() => new Date()), updatedAt: optionalDate,
   category: z.string().default("未分类"), tags: z.array(z.string().min(1)).default([]),
-  cover: z.string().optional(), coverAlt: z.string().default(""), draft: z.boolean().default(true)
+  cover: z.string().optional(), coverAlt: z.string().default(""), draft: z.boolean().default(false)
 });
 
 export type Profile = z.infer<typeof profileSchema>;

@@ -20,7 +20,7 @@ it("accepts minimal manual records with neutral defaults", () => {
     language: "zh", slug: "", type: "other", title: "新资源", links: [], files: []
   });
   expect(blogSchema.parse({ title: "新文章" })).toMatchObject({
-    language: "zh", slug: "", title: "新文章", category: "未分类"
+    language: "zh", slug: "", title: "新文章", category: "未分类", draft: false
   });
 });
 
