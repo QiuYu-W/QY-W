@@ -6,7 +6,7 @@ import { alternateLocale, type Locale } from "../lib/i18n";
 import { assetUrl, routeFor } from "../lib/urls";
 interface Props { locale: Locale }
 const { locale } = Astro.props;
-const posts = await getPublishedPosts(locale);
+const posts = await getPublishedPosts();
 const profile = await getProfile();
 const title = locale === "zh" ? "科研博客" : "Research blog";
 const description = locale === "zh" ? "研究笔记、方法与实践。" : "Research notes, methods and practice.";

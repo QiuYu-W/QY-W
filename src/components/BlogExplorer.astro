@@ -23,7 +23,7 @@ const tags = [...new Set(posts.flatMap(({ data }) => data.tags))].sort();
   {posts.length === 0 && <p>{copy.empty}</p>}
   <div class="post-list">
     {posts.map((post) => <article data-blog-post data-post-id={post.id}>
-      <h2><a href={routeFor(locale, "blog", post.data.slug)}>{post.data.title}</a></h2>
+      <h2><a href={routeFor(post.data.language, "blog", post.data.slug)}>{post.data.title}</a></h2>
       <p>{post.data.summary}</p>
       <p class="metadata"><time datetime={post.data.publishedAt.toISOString()}>{post.data.publishedAt.toISOString().slice(0, 10)}</time> · {post.data.category}{post.data.tags.length > 0 && ` · ${post.data.tags.join(" · ")}`}</p>
     </article>)}
@@ -48,7 +48,7 @@ const tags = [...new Set(posts.flatMap(({ data }) => data.tags))].sort();
       try {
         const response = await fetch(explorer.dataset.indexUrl!);
         if (!response.ok) throw new Error("Search index unavailable");
-        const documents: SearchDocument[] = (await response.json()).filter((doc: SearchDocument) => doc.language === explorer.dataset.locale);
+        const documents: SearchDocument[] = await response.json();
         const byId = new Map(documents.map((doc) => [doc.id, doc]));
         if (rows.some((row) => !byId.has(row.dataset.postId!))) throw new Error("Incomplete search index");
         const segmenter = new Intl.Segmenter(explorer.dataset.locale, { granularity: "word" });

@@ -8,5 +8,5 @@ export const GET: APIRoute = async (context) => rss({
   site: new URL(routeFor("en", "blog"), context.site!),
   customData: "<language>en</language>",
   trailingSlash: false,
-  items: (await getPublishedPosts("en")).map(({ data }) => ({ title: data.title, description: data.summary, pubDate: data.publishedAt, link: new URL(routeFor("en", "blog", data.slug), context.site!).href, categories: [data.category, ...data.tags] }))
+  items: (await getPublishedPosts()).map(({ data }) => ({ title: data.title, description: data.summary, pubDate: data.publishedAt, link: new URL(routeFor(data.language, "blog", data.slug), context.site!).href, categories: [data.category, ...data.tags] }))
 });
