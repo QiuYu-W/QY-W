@@ -1,8 +1,7 @@
 language: zh
 type: software
 title: 键鼠按键统计
-links:
-  - {}
+summary: ..
 files:
-  - /media/resources/file-1.zip
+  - /media/resources/file.zip
 draft: false
