@@ -7,11 +7,11 @@ statementEn: A newbie who studies every day.
 bioZh: 待填写
 bioEn: To be provided
 interestsZh:
-  - 人工智能、模式识别
-  - 特征选择、多视图
+  - 人工智能、特征选择、多视图
+  - 具身智能
 interestsEn:
-  - Artificial Intelligence, Pattern Recognition
-  - Feature Selection, Multi-view
+  - Artificial Intelligence, Feature Selection, Multi-view
+  - Embodied Intelligence
 portrait: /media/file.png
 portraitAltZh: 头像
 portraitAltEn: profile picture
